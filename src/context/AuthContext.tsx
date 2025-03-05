@@ -1,6 +1,6 @@
-
-import { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, Application } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthContextType {
   user: User | null;
@@ -16,52 +16,88 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock authentication for demo purposes
-// In a real app, this would connect to Supabase
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+// Mock user data for demonstration
+const mockUsers = [
+  {
+    id: "user1",
+    email: "student@example.com",
+    name: "John Student",
+    role: "student" as const,
+    skills: ["React", "TypeScript", "Node.js"],
+    university: "Stanford University",
+    major: "Computer Science",
+    graduationYear: "2024",
+    experienceLevel: "intermediate" as const,
+    availability: {
+      status: "available" as const,
+      hours: 15
+    },
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: "user2",
+    email: "startup@example.com",
+    name: "Jane Founder",
+    role: "startup" as const,
+    companyName: "TechStartup Inc.",
+    companyDescription: "We're building the future of technology.",
+    sectors: ["SaaS", "AI"],
+    stage: "seed" as const,
+    hiringStatus: "hiring" as const,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+];
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is already logged in
-    const checkUser = async () => {
+    // Check for saved user in localStorage
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
       try {
-        const storedUser = localStorage.getItem('skillmate-user');
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        }
+        setUser(JSON.parse(savedUser));
       } catch (error) {
-        console.error("Error checking authentication:", error);
-      } finally {
-        setIsLoading(false);
+        console.error("Failed to parse saved user:", error);
+        localStorage.removeItem("user");
       }
-    };
-
-    checkUser();
+    }
+    setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
-    setIsLoading(true);
     try {
-      // Mock login - would use Supabase auth in real implementation
-      const mockUser: User = {
-        id: "123",
-        email,
-        name: "Demo User",
-        role: "student",
-        skills: ["React", "TypeScript", "UI/UX"],
-        languages: ["English", "Spanish"],
-        availability: { status: "available", hours: 20 },
-        experienceLevel: "intermediate",
-        areasOfInterest: ["SaaS", "Fintech", "EdTech"],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      setIsLoading(true);
       
-      setUser(mockUser);
-      localStorage.setItem('skillmate-user', JSON.stringify(mockUser));
+      // In a real app, this would be an API call
+      // For demo, we'll use mock data
+      const foundUser = mockUsers.find(u => u.email === email);
+      
+      if (!foundUser) {
+        throw new Error("Invalid email or password");
+      }
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setUser(foundUser);
+      localStorage.setItem("user", JSON.stringify(foundUser));
+      
+      toast({
+        title: "Welcome back!",
+        description: `You've successfully signed in as ${foundUser.name}.`,
+      });
     } catch (error) {
       console.error("Login error:", error);
+      toast({
+        title: "Login failed",
+        description: error instanceof Error ? error.message : "Please check your credentials and try again.",
+        variant: "destructive",
+      });
       throw error;
     } finally {
       setIsLoading(false);
@@ -98,24 +134,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signup = async (email: string, password: string, name: string, role: 'student' | 'startup') => {
-    setIsLoading(true);
     try {
-      // Mock signup - would use Supabase auth in real implementation
-      const mockUser: User = {
-        id: "123",
+      setIsLoading(true);
+      
+      // Check if email already exists
+      if (mockUsers.some(u => u.email === email)) {
+        throw new Error("Email already in use");
+      }
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Create new user
+      const newUser: User = {
+        id: `user${Date.now()}`,
         email,
         name,
         role,
-        experienceLevel: role === 'student' ? 'beginner' : undefined,
-        areasOfInterest: [],
         createdAt: new Date(),
         updatedAt: new Date()
       };
       
-      setUser(mockUser);
-      localStorage.setItem('skillmate-user', JSON.stringify(mockUser));
+      // In a real app, this would be saved to a database
+      mockUsers.push(newUser);
+      
+      setUser(newUser);
+      localStorage.setItem("user", JSON.stringify(newUser));
+      
+      toast({
+        title: "Account created!",
+        description: `Welcome to the platform, ${name}!`,
+      });
+      
+      return;
     } catch (error) {
       console.error("Signup error:", error);
+      toast({
+        title: "Signup failed",
+        description: error instanceof Error ? error.message : "Please try again with different credentials.",
+        variant: "destructive",
+      });
       throw error;
     } finally {
       setIsLoading(false);
@@ -123,30 +181,65 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = async () => {
-    setIsLoading(true);
     try {
-      // Mock logout - would use Supabase auth in real implementation
+      setIsLoading(true);
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       setUser(null);
-      localStorage.removeItem('skillmate-user');
+      localStorage.removeItem("user");
+      
+      toast({
+        title: "Signed out",
+        description: "You've been successfully signed out.",
+      });
     } catch (error) {
       console.error("Logout error:", error);
-      throw error;
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const updateUserProfile = async (userData: Partial<User>) => {
-    setIsLoading(true);
     try {
-      // Mock update profile - would use Supabase in real implementation
-      if (user) {
-        const updatedUser = { ...user, ...userData, updatedAt: new Date() };
-        setUser(updatedUser);
-        localStorage.setItem('skillmate-user', JSON.stringify(updatedUser));
+      setIsLoading(true);
+      
+      if (!user) {
+        throw new Error("Not authenticated");
       }
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const updatedUser = {
+        ...user,
+        ...userData,
+        updatedAt: new Date()
+      };
+      
+      // Update in mock data
+      const userIndex = mockUsers.findIndex(u => u.id === user.id);
+      if (userIndex >= 0) {
+        mockUsers[userIndex] = updatedUser;
+      }
+      
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      
+      return;
     } catch (error) {
-      console.error("Update profile error:", error);
+      console.error("Profile update error:", error);
+      toast({
+        title: "Update failed",
+        description: error instanceof Error ? error.message : "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
       throw error;
     } finally {
       setIsLoading(false);

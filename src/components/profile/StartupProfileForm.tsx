@@ -1,39 +1,71 @@
-import { useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
-import { X, Plus, Briefcase, Globe, Linkedin, Users } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { User } from "@/lib/types";
+import { Plus, X, Globe, Linkedin, Users, MapPin, Building2, Building, Calendar, Briefcase } from "lucide-react";
+import { MultiSelect, Option } from "@/components/ui/multi-select";
 
-interface StartupSignupFormProps {
-  email: string;
-  password: string;
-  name: string;
-  onSuccess?: () => void;
+// Industry sector options
+const industrySectorOptions: Option[] = [
+  { label: "Software Development", value: "software_development" },
+  { label: "Artificial Intelligence", value: "ai" },
+  { label: "Machine Learning", value: "machine_learning" },
+  { label: "Fintech", value: "fintech" },
+  { label: "Healthtech", value: "healthtech" },
+  { label: "Edtech", value: "edtech" },
+  { label: "E-commerce", value: "ecommerce" },
+  { label: "Blockchain", value: "blockchain" },
+  { label: "Cybersecurity", value: "cybersecurity" },
+  { label: "Clean Energy", value: "clean_energy" },
+  { label: "Biotech", value: "biotech" },
+  { label: "Robotics", value: "robotics" },
+  { label: "IoT (Internet of Things)", value: "iot" },
+  { label: "AR/VR", value: "ar_vr" },
+  { label: "SaaS", value: "saas" },
+  { label: "Mobile Apps", value: "mobile_apps" },
+  { label: "Gaming", value: "gaming" },
+  { label: "Social Media", value: "social_media" },
+  { label: "Marketplace", value: "marketplace" },
+  { label: "Transportation", value: "transportation" },
+  { label: "Food & Beverage", value: "food_beverage" },
+  { label: "Real Estate", value: "real_estate" },
+  { label: "Travel & Hospitality", value: "travel_hospitality" },
+  { label: "Media & Entertainment", value: "media_entertainment" },
+  { label: "Agriculture", value: "agriculture" },
+  { label: "Manufacturing", value: "manufacturing" },
+  { label: "Retail", value: "retail" },
+  { label: "Logistics", value: "logistics" },
+  { label: "Legal Tech", value: "legal_tech" },
+  { label: "HR Tech", value: "hr_tech" }
+];
+
+interface StartupProfileFormProps {
+  user: User;
+  onSubmit: (data: Partial<User>) => Promise<void>;
 }
 
-const StartupSignupForm = ({ email, password, name, onSuccess }: StartupSignupFormProps) => {
-  const { signup, updateUserProfile } = useAuth();
-  const { toast } = useToast();
+const StartupProfileForm = ({ user, onSubmit }: StartupProfileFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [sectorInput, setSectorInput] = useState("");
-  const [sectors, setSectors] = useState<string[]>([]);
+  const [sectors, setSectors] = useState<string[]>(user.sectors || []);
   const [cofounderInput, setCofounderInput] = useState("");
-  const [cofounderNames, setCofounderNames] = useState<string[]>([]);
+  const [cofounderNames, setCofounderNames] = useState<string[]>(user.founderNames || []);
   
   const [formData, setFormData] = useState({
-    companyName: "",
-    companyDescription: "",
-    websiteUrl: "",
-    linkedinUrl: "",
-    location: "",
-    stage: "idea",
-    hiringStatus: "not_hiring" as "hiring" | "not_hiring" | "future_hiring"
+    name: user.name || "",
+    companyName: user.companyName || "",
+    companyDescription: user.companyDescription || "",
+    websiteUrl: user.websiteUrl || "",
+    linkedinUrl: user.linkedinUrl || "",
+    location: user.location || "",
+    stage: user.stage || "idea",
+    hiringStatus: user.hiringStatus || "not_hiring" as "hiring" | "not_hiring" | "future_hiring",
+    industrySectors: user.industrySectors || []
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -67,39 +99,32 @@ const StartupSignupForm = ({ email, password, name, onSuccess }: StartupSignupFo
     setCofounderNames(cofounderNames.filter(c => c !== cofounder));
   };
 
+  const handleIndustrySectorsChange = (selected: string[]) => {
+    setFormData(prev => ({ ...prev, industrySectors: selected }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.companyName || sectors.length === 0) {
+      return;
+    }
+    
     try {
       setIsLoading(true);
       
-      // First create the basic account
-      await signup(email, password, name, "startup");
-      
-      // Then update with startup specific info
-      await updateUserProfile({
+      await onSubmit({
+        name: formData.name,
         companyName: formData.companyName,
         companyDescription: formData.companyDescription,
         websiteUrl: formData.websiteUrl,
         linkedinUrl: formData.linkedinUrl,
         location: formData.location,
-        founderNames: cofounderNames.length > 0 ? cofounderNames : undefined,
+        founderNames: cofounderNames,
         sectors,
         stage: formData.stage,
-        hiringStatus: formData.hiringStatus
-      });
-      
-      toast({
-        title: "Startup account created!",
-        description: "You're now ready to post problems and find talented students.",
-      });
-      
-      onSuccess?.();
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Error",
-        description: "Failed to create startup account. Please try again.",
-        variant: "destructive",
+        hiringStatus: formData.hiringStatus,
+        industrySectors: formData.industrySectors
       });
     } finally {
       setIsLoading(false);
@@ -118,9 +143,26 @@ const StartupSignupForm = ({ email, password, name, onSuccess }: StartupSignupFo
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
-        <CardContent className="pt-6 space-y-6">
+        <CardHeader>
+          <CardTitle>Basic Information</CardTitle>
+          <CardDescription>Update your startup's profile information</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="companyName">Company Name <span className="text-red-500">*</span></Label>
+            <Label htmlFor="name">Your Name</Label>
+            <Input
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Your full name"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="companyName" className="flex items-center">
+              <Building2 className="mr-1 h-4 w-4" /> Company Name <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="companyName"
               name="companyName"
@@ -173,7 +215,9 @@ const StartupSignupForm = ({ email, password, name, onSuccess }: StartupSignupFo
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
+            <Label htmlFor="location" className="flex items-center">
+              <MapPin className="mr-1 h-4 w-4" /> Location
+            </Label>
             <Input
               id="location"
               name="location"
@@ -186,7 +230,11 @@ const StartupSignupForm = ({ email, password, name, onSuccess }: StartupSignupFo
       </Card>
       
       <Card>
-        <CardContent className="pt-6 space-y-6">
+        <CardHeader>
+          <CardTitle>Company Details</CardTitle>
+          <CardDescription>Tell us more about your startup</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label className="flex items-center">
               <Users className="mr-1 h-4 w-4" /> Co-Founders
@@ -226,36 +274,14 @@ const StartupSignupForm = ({ email, password, name, onSuccess }: StartupSignupFo
           
           <div className="space-y-2">
             <Label>Industry Sectors <span className="text-red-500">*</span></Label>
-            <div className="flex space-x-2">
-              <Input
-                value={sectorInput}
-                onChange={(e) => setSectorInput(e.target.value)}
-                placeholder="e.g. Fintech, SaaS, E-commerce"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addSector();
-                  }
-                }}
+            <div className="flex items-center">
+              <Briefcase className="mr-2 h-4 w-4 text-muted-foreground" />
+              <MultiSelect
+                options={industrySectorOptions}
+                selected={formData.industrySectors}
+                onChange={handleIndustrySectorsChange}
+                placeholder="Select industry sectors"
               />
-              <Button type="button" size="sm" onClick={addSector}>
-                Add
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {sectors.map((sector) => (
-                <Badge 
-                  key={sector} 
-                  variant="secondary" 
-                  className="flex items-center"
-                >
-                  {sector}
-                  <X 
-                    className="ml-1 h-3 w-3 cursor-pointer hover:text-destructive" 
-                    onClick={() => removeSector(sector)}
-                  />
-                </Badge>
-              ))}
             </div>
             {sectors.length === 0 && (
               <p className="text-xs text-muted-foreground">Please add at least one sector</p>
@@ -264,9 +290,7 @@ const StartupSignupForm = ({ email, password, name, onSuccess }: StartupSignupFo
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="stage" className="flex items-center">
-                <Briefcase className="mr-1 h-4 w-4" /> Company Stage <span className="text-red-500">*</span>
-              </Label>
+              <Label htmlFor="stage">Company Stage <span className="text-red-500">*</span></Label>
               <Select 
                 value={formData.stage} 
                 onValueChange={(value) => handleSelectChange("stage", value)}
@@ -307,10 +331,10 @@ const StartupSignupForm = ({ email, password, name, onSuccess }: StartupSignupFo
       </Card>
       
       <Button type="submit" className="w-full" disabled={isLoading || sectors.length === 0}>
-        {isLoading ? "Creating account..." : "Create Startup Account"}
+        {isLoading ? "Saving changes..." : "Save Changes"}
       </Button>
     </form>
   );
 };
 
-export default StartupSignupForm;
+export default StartupProfileForm; 

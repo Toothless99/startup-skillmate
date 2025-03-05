@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,15 @@ import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/components/ui/theme-provider";
 import { Menu, Sun, Moon, X, User, PanelLeft } from "lucide-react";
 import AuthModal from "@/components/auth/AuthModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { LogOut, User as UserIcon, Settings, Plus } from "lucide-react";
 
 const Navbar = () => {
   const location = useLocation();
@@ -13,6 +21,7 @@ const Navbar = () => {
   const { theme, setTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState<"login" | "signup">("login");
   
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
@@ -21,11 +30,37 @@ const Navbar = () => {
     { name: "Home", path: "/" },
     { name: "Problems", path: "/problems" },
     ...(isAuthenticated ? [{ name: "Profile", path: "/profile" }] : []),
-    ...(user?.role === "admin" ? [{ name: "Admin", path: "/admin" }] : [])
+    ...(user?.role === "admin" ? [{ name: "Admin", path: "/admin" }] : []),
+    ...(isAuthenticated && user?.role === "startup" ? [{ name: "Post Problem", path: "/problems/new" }] : [])
   ];
   
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+  
+  const isStartup = user?.role === "startup";
+  
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map(part => part[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
+  
+  const handleOpenLogin = () => {
+    setAuthModalTab("login");
+    setIsAuthModalOpen(true);
+  };
+  
+  const handleOpenSignup = () => {
+    setAuthModalTab("signup");
+    setIsAuthModalOpen(true);
+  };
+  
+  const handleLogout = async () => {
+    await logout();
   };
   
   return (
@@ -72,28 +107,49 @@ const Navbar = () => {
           </Button>
           
           {isAuthenticated ? (
-            <div className="flex items-center space-x-4">
-              <Link to="/profile">
-                {user?.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.name}
-                    className="h-8 w-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="h-4 w-4" />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>
+                      {user?.name ? getInitials(user.name) : "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-1 leading-none">
+                    <p className="font-medium">{user?.name}</p>
+                    <p className="text-sm text-muted-foreground">{user?.email}</p>
                   </div>
-                )}
-              </Link>
-              <Button variant="outline" onClick={() => logout()}>
-                Sign Out
-              </Button>
-            </div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="cursor-pointer w-full flex items-center">
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
-            <Button onClick={() => setIsAuthModalOpen(true)}>
-              Sign In
-            </Button>
+            <>
+              <Button variant="ghost" onClick={handleOpenLogin}>
+                Sign In
+              </Button>
+              <Button onClick={handleOpenSignup}>
+                Sign Up
+              </Button>
+            </>
           )}
         </div>
         
@@ -156,7 +212,7 @@ const Navbar = () => {
                     />
                   ) : (
                     <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="h-4 w-4" />
+                      <UserIcon className="h-4 w-4" />
                     </div>
                   )}
                   <span className="text-sm font-medium">{user?.name}</span>
@@ -164,10 +220,7 @@ const Navbar = () => {
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => {
-                    logout();
-                    closeMenu();
-                  }}
+                  onClick={handleLogout}
                 >
                   Sign Out
                 </Button>
@@ -177,7 +230,7 @@ const Navbar = () => {
                 <Button 
                   className="w-full"
                   onClick={() => {
-                    setIsAuthModalOpen(true);
+                    handleOpenLogin();
                     closeMenu();
                   }}
                 >
@@ -192,6 +245,7 @@ const Navbar = () => {
       <AuthModal 
         isOpen={isAuthModalOpen} 
         onClose={() => setIsAuthModalOpen(false)} 
+        defaultTab={authModalTab}
       />
     </header>
   );

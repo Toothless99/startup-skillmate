@@ -1,4 +1,3 @@
-
 export interface User {
   id: string
   email: string
@@ -23,6 +22,7 @@ export interface User {
   founderNames?: string[]
   createdAt: Date
   updatedAt: Date
+  industrySectors?: string[]
 }
 
 export interface Experience {
@@ -62,6 +62,7 @@ export interface Problem {
   requiredSkills: string[]
   experienceLevel: 'beginner' | 'intermediate' | 'advanced'
   compensation?: string
+  additionalInfo?: string
   deadline?: Date
   status: 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled'
   featured?: boolean

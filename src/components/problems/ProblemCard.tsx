@@ -1,19 +1,19 @@
-
 import { Problem } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Briefcase, Tag, Building2 } from "lucide-react";
+import { Calendar, Clock, Briefcase, Tag, Building2, Info } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 
 interface ProblemCardProps {
   problem: Problem;
   onApply?: (problemId: string) => void;
+  onViewDetails?: (problemId: string) => void;
   isFeatured?: boolean;
 }
 
-const ProblemCard = ({ problem, onApply, isFeatured }: ProblemCardProps) => {
+const ProblemCard = ({ problem, onApply, onViewDetails, isFeatured }: ProblemCardProps) => {
   // Handle status badge display
   const getStatusBadge = () => {
     switch (problem.status) {
@@ -110,11 +110,20 @@ const ProblemCard = ({ problem, onApply, isFeatured }: ProblemCardProps) => {
           <Clock className="mr-1 h-3 w-3" />
           Posted {format(new Date(problem.createdAt), "MMM d, yyyy")}
         </div>
-        {problem.status === "open" && onApply && (
-          <Button size="sm" onClick={() => onApply(problem.id)}>
-            Apply Now
+        <div className="flex gap-2">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={() => onViewDetails && onViewDetails(problem.id)}
+          >
+            <Info className="mr-1 h-4 w-4" /> Details
           </Button>
-        )}
+          {problem.status === "open" && onApply && (
+            <Button size="sm" onClick={() => onApply(problem.id)}>
+              Apply Now
+            </Button>
+          )}
+        </div>
       </CardFooter>
     </Card>
   );

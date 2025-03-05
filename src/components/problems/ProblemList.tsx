@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Problem } from "@/lib/types";
@@ -116,9 +115,11 @@ interface ProblemListProps {
   initialProblems?: Problem[];
   startupId?: string;
   limitForGuests?: boolean;
+  onViewDetails?: (problemId: string) => void;
+  onApply?: (problemId: string) => void;
 }
 
-const ProblemList = ({ initialProblems, startupId, limitForGuests = true }: ProblemListProps) => {
+const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onViewDetails, onApply }: ProblemListProps) => {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
@@ -332,6 +333,7 @@ const ProblemList = ({ initialProblems, startupId, limitForGuests = true }: Prob
               key={problem.id}
               problem={problem}
               onApply={handleApply}
+              onViewDetails={onViewDetails}
               isFeatured={problem.featured}
             />
           ))

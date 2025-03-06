@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, Application } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -17,7 +18,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Mock user data for demonstration
-const mockUsers = [
+const mockUsers: User[] = [
   {
     id: "user1",
     email: "student@example.com",
@@ -43,7 +44,8 @@ const mockUsers = [
     companyName: "TechStartup Inc.",
     companyDescription: "We're building the future of technology.",
     sectors: ["SaaS", "AI"],
-    stage: "seed" as const,
+    stage: "seed",
+    location: "San Francisco, CA",
     hiringStatus: "hiring" as const,
     createdAt: new Date(),
     updatedAt: new Date()
@@ -116,6 +118,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: "student",
         skills: ["React", "JavaScript"],
         languages: ["English"],
+        university: "State University",
+        major: "Computer Science",
+        graduationYear: "2023",
         availability: { status: "available" },
         experienceLevel: "intermediate",
         areasOfInterest: ["SaaS", "Fintech"],
@@ -145,14 +150,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Create new user
+      // Create new user with appropriate defaults based on role
       const newUser: User = {
         id: `user${Date.now()}`,
         email,
         name,
         role,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        ...(role === 'student' ? {
+          university: '',
+          major: '',
+          graduationYear: '',
+          experienceLevel: 'beginner' as const,
+          availability: { status: 'available' as const }
+        } : {
+          companyName: '',
+          companyDescription: '',
+          stage: 'idea',
+          hiringStatus: 'not_hiring' as const
+        })
       };
       
       // In a real app, this would be saved to a database

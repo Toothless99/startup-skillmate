@@ -294,7 +294,6 @@ const StudentProfileForm = ({ user, onSubmit }: StudentProfileFormProps) => {
               selected={skills}
               onChange={setSkills}
               placeholder="Select skills"
-              emptyMessage="No skills found."
             />
             {skills.length === 0 && (
               <p className="text-xs text-muted-foreground">Please add at least one skill</p>
@@ -308,7 +307,6 @@ const StudentProfileForm = ({ user, onSubmit }: StudentProfileFormProps) => {
               selected={areasOfInterest}
               onChange={setAreasOfInterest}
               placeholder="Select areas of interest"
-              emptyMessage="No areas found."
             />
           </div>
         </CardContent>
@@ -329,7 +327,6 @@ const StudentProfileForm = ({ user, onSubmit }: StudentProfileFormProps) => {
               selected={languages}
               onChange={setLanguages}
               placeholder="Select languages"
-              emptyMessage="No languages found."
             />
           </div>
           
@@ -378,4 +375,4 @@ const StudentProfileForm = ({ user, onSubmit }: StudentProfileFormProps) => {
   );
 };
 
-export default StudentProfileForm; 
+export default StudentProfileForm;

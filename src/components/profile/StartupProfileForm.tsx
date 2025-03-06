@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { User } from "@/lib/types";
-import { Plus, X, Globe, Linkedin, Users, MapPin, Building2, Building, Calendar, Briefcase } from "lucide-react";
+import { Plus, X, Globe, Linkedin, Users, MapPin, Building2, Briefcase } from "lucide-react";
 import { MultiSelect, Option } from "@/components/ui/multi-select";
 
 // Industry sector options
@@ -97,10 +97,6 @@ const StartupProfileForm = ({ user, onSubmit }: StartupProfileFormProps) => {
 
   const removeCofounder = (cofounder: string) => {
     setCofounderNames(cofounderNames.filter(c => c !== cofounder));
-  };
-
-  const handleIndustrySectorsChange = (selected: string[]) => {
-    setFormData(prev => ({ ...prev, industrySectors: selected }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -279,7 +275,7 @@ const StartupProfileForm = ({ user, onSubmit }: StartupProfileFormProps) => {
               <MultiSelect
                 options={industrySectorOptions}
                 selected={formData.industrySectors}
-                onChange={handleIndustrySectorsChange}
+                onChange={(selected) => handleSelectChange("industrySectors", selected)}
                 placeholder="Select industry sectors"
               />
             </div>
@@ -337,4 +333,4 @@ const StartupProfileForm = ({ user, onSubmit }: StartupProfileFormProps) => {
   );
 };
 
-export default StartupProfileForm; 
+export default StartupProfileForm;

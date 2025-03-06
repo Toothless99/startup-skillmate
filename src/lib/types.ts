@@ -1,3 +1,4 @@
+
 export interface User {
   id: string
   email: string
@@ -12,6 +13,10 @@ export interface User {
   availability?: Availability
   areasOfInterest?: string[]
   experienceLevel?: 'beginner' | 'intermediate' | 'advanced'
+  // Student specific fields
+  university?: string
+  major?: string
+  graduationYear?: string
   // Startup specific fields
   companyName?: string
   companyDescription?: string
@@ -20,6 +25,8 @@ export interface User {
   linkedinUrl?: string
   websiteUrl?: string
   founderNames?: string[]
+  location?: string
+  hiringStatus?: 'hiring' | 'not_hiring' | 'future_hiring'
   createdAt: Date
   updatedAt: Date
   industrySectors?: string[]

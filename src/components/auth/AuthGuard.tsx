@@ -97,7 +97,7 @@ export const AuthButton = ({
   const { isAuthenticated } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (isAuthenticated) {
       onClick?.(e);
     } else {

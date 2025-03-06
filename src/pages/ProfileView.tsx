@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { getProfileById } from "@/lib/supabase";
+import { getUserById } from "@/lib/supabase";
 import { User } from "@/lib/types";
 import ProfileCard from "@/components/profile/ProfileCard";
 import { ArrowLeft } from "lucide-react";

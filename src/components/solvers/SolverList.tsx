@@ -7,9 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { User, GraduationCap, Briefcase, Languages, Search, ExternalLink, Filter, X } from "lucide-react";
 import { User as UserType } from "@/lib/types";
 import { Link } from "react-router-dom";
-import { getSolvers } from "@/lib/supabase";
+import { getStudents } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import SolverCard from "./SolverCard";
+import { mockSolvers } from "@/lib/mockData";
 
 interface SolverListProps {
   initialSolvers?: UserType[];
@@ -28,34 +29,44 @@ const SolverList = ({ initialSolvers, featuredOnly = false, onViewProfile }: Sol
 
   useEffect(() => {
     const fetchSolvers = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        // If initialSolvers is provided, use that instead of fetching
-        if (initialSolvers && initialSolvers.length > 0) {
+        // Fetch solvers from Supabase
+        const fetchedSolvers = await getStudents();
+        
+        if (fetchedSolvers.length > 0) {
+          setSolvers(fetchedSolvers);
+          setFilteredSolvers(fetchedSolvers);
+        } else if (initialSolvers && initialSolvers.length > 0) {
+          // Use provided solvers if available
           setSolvers(initialSolvers);
           setFilteredSolvers(initialSolvers);
-          return;
+        } else {
+          // Use our comprehensive mock data
+          setSolvers(mockSolvers);
+          setFilteredSolvers(mockSolvers);
+          
+          toast({
+            title: "Using demo data",
+            description: "Currently displaying mock solver data for demonstration.",
+          });
         }
-
-        // Otherwise fetch from API
-        const fetchedSolvers = await getSolvers(featuredOnly);
-        setSolvers(fetchedSolvers);
-        setFilteredSolvers(fetchedSolvers);
       } catch (error) {
         console.error("Error fetching solvers:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load solvers. Please try again later.",
-          variant: "destructive",
-        });
-        // Set some mock data as fallback
+        // Fallback to mock data
         setSolvers(mockSolvers);
         setFilteredSolvers(mockSolvers);
+        
+        toast({
+          title: "Error fetching solvers",
+          description: "Using demo data instead.",
+          variant: "destructive",
+        });
       } finally {
         setIsLoading(false);
       }
     };
-
+    
     fetchSolvers();
   }, [initialSolvers, featuredOnly, toast]);
 
@@ -108,55 +119,6 @@ const SolverList = ({ initialSolvers, featuredOnly = false, onViewProfile }: Sol
     setExperienceFilter("all");
     setSelectedSkills([]);
   };
-
-  // Mock solvers data for fallback
-  const mockSolvers: UserType[] = [
-    {
-      id: "1",
-      email: "john.doe@example.com",
-      name: "John Doe",
-      role: "student",
-      skills: ["React", "TypeScript", "Node.js"],
-      university: "Stanford University",
-      major: "Computer Science",
-      graduationYear: "2024",
-      experienceLevel: "intermediate",
-      availability: { status: "available", hours: 20 },
-      bio: "Full-stack developer with a passion for building user-friendly applications.",
-      createdAt: new Date("2023-01-15"),
-      updatedAt: new Date("2023-06-20")
-    },
-    {
-      id: "2",
-      email: "jane.smith@example.com",
-      name: "Jane Smith",
-      role: "student",
-      skills: ["UI/UX", "Figma", "Adobe XD"],
-      university: "MIT",
-      major: "Design",
-      graduationYear: "2023",
-      experienceLevel: "advanced",
-      availability: { status: "available", hours: 15 },
-      bio: "UI/UX designer with 3+ years of experience creating beautiful interfaces.",
-      createdAt: new Date("2023-02-10"),
-      updatedAt: new Date("2023-06-15")
-    },
-    {
-      id: "3",
-      email: "alex.johnson@example.com",
-      name: "Alex Johnson",
-      role: "student",
-      skills: ["Python", "Machine Learning", "Data Analysis"],
-      university: "UC Berkeley",
-      major: "Data Science",
-      graduationYear: "2025",
-      experienceLevel: "beginner",
-      availability: { status: "limited", hours: 10 },
-      bio: "Data scientist specializing in machine learning and predictive analytics.",
-      createdAt: new Date("2023-03-05"),
-      updatedAt: new Date("2023-06-10")
-    }
-  ];
 
   return (
     <div className="space-y-6">

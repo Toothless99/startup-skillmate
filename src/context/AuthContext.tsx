@@ -1,370 +1,197 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { User, Application } from "@/lib/types";
-import { useToast } from "@/hooks/use-toast";
-import { 
-  signIn, 
-  signUp, 
-  signInWithGoogle, 
-  signOut, 
-  getCurrentUser,
-  createProfile,
-  updateProfile,
-  getApplicationsForStartup,
-  supabase
-} from "@/lib/supabase";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { supabase, createUser, updateUser, getUserById } from "@/lib/supabase";
+import { User } from "@/lib/types";
 
 interface AuthContextType {
   user: User | null;
-  isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
-  signup: (email: string, password: string, name: string, role: 'student' | 'startup') => Promise<void>;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (email: string, password: string, userData: Partial<User>) => Promise<{ success: boolean; error?: string; userId?: string }>;
   logout: () => Promise<void>;
-  getApplications: () => Promise<Application[]>;
-  updateUserProfile: (userData: Partial<User>) => Promise<void>;
+  updateUserProfile: (userId: string, userData: Partial<User>) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user data for demonstration
-const mockUsers = [
-  {
-    id: "user1",
-    email: "student@example.com",
-    name: "John Student",
-    role: "student" as const,
-    skills: ["React", "TypeScript", "Node.js"],
-    university: "Stanford University",
-    major: "Computer Science",
-    graduationYear: "2024",
-    experienceLevel: "intermediate" as const,
-    availability: {
-      status: "available" as const,
-      hours: 15
-    },
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: "user2",
-    email: "startup@example.com",
-    name: "Jane Founder",
-    role: "startup" as const,
-    companyName: "TechStartup Inc.",
-    companyDescription: "We're building the future of technology.",
-    sectors: ["SaaS", "AI"],
-    stage: "seed" as const,
-    hiringStatus: "hiring" as const,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-];
-
-// Add a development mode flag
-const DEV_MODE = true;
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for saved user in localStorage
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
+    // Check for existing session on load
+    const checkSession = async () => {
       try {
-        const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
-        setIsAuthenticated(true);
+        const { data } = await supabase.auth.getSession();
+        
+        if (data.session?.user) {
+          const userData = await getUserById(data.session.user.id);
+          if (userData) {
+            setUser(userData);
+            setIsAuthenticated(true);
+          }
+        }
       } catch (error) {
-        console.error("Failed to parse saved user:", error);
-        localStorage.removeItem("user");
+        console.error("Error checking session:", error);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+
+    checkSession();
+
+    // Set up auth state change listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === "SIGNED_IN" && session) {
+          const userData = await getUserById(session.user.id);
+          if (userData) {
+            setUser(userData);
+            setIsAuthenticated(true);
+          }
+        } else if (event === "SIGNED_OUT") {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
-    try {
-      setIsLoading(true);
-      
-      if (DEV_MODE) {
-        // In a real app, this would be an API call
-        // For demo, we'll use mock data
-        const foundUser = mockUsers.find(u => u.email === email);
-        
-        if (!foundUser) {
-          throw new Error("Invalid email or password");
-        }
-        
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        setUser(foundUser);
-        setIsAuthenticated(true);
-        localStorage.setItem("user", JSON.stringify(foundUser));
-        
-        toast({
-          title: "Welcome back!",
-          description: `You've successfully signed in as ${foundUser.name}.`,
-        });
-        
-        return;
-      }
-      
-      // Real authentication logic
-      const { user: authUser, session } = await signIn(email, password);
-      
-      if (!authUser) {
-        throw new Error("Invalid email or password");
-      }
-      
-      // Get user profile
-      const userProfile = await getCurrentUser();
-      
-      setUser(userProfile);
-      setIsAuthenticated(true);
-      localStorage.setItem("user", JSON.stringify(userProfile));
-      
-      toast({
-        title: "Welcome back!",
-        description: `You've successfully signed in as ${userProfile.name}.`,
-      });
-    } catch (error) {
-      console.error("Login error:", error);
-      toast({
-        title: "Login failed",
-        description: error instanceof Error ? error.message : "Please check your credentials and try again.",
-        variant: "destructive",
-      });
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loginWithGoogle = async () => {
     setIsLoading(true);
     try {
-      // Mock Google login - would use Supabase auth in real implementation
-      const mockUser: User = {
-        id: "123",
-        email: "user@example.com",
-        name: "Google User",
-        avatarUrl: "https://i.pravatar.cc/150?u=google",
-        role: "student",
-        skills: ["React", "JavaScript"],
-        languages: ["English"],
-        availability: { status: "available" },
-        experienceLevel: "intermediate",
-        areasOfInterest: ["SaaS", "Fintech"],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      // Demo account handling - Check if this is a demo account
+      const isDemoAccount = email === "student@example.com" || email === "startup@example.com";
       
-      setUser(mockUser);
-      localStorage.setItem('skillmate-user', JSON.stringify(mockUser));
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        // If it's a demo account and the error is about email confirmation
+        if (isDemoAccount && error.message.includes("Email not confirmed")) {
+          // For demo accounts, we can simulate a successful login
+          console.log("Demo account detected - bypassing email confirmation");
+          
+          // Get user profile based on email
+          const role = email.startsWith("student") ? "student" : "startup";
+          
+          // Create a mock user object
+          const mockUser = {
+            id: `demo-${role}-id`,
+            email: email,
+            role: role,
+            name: role === "student" ? "Demo Student" : "Demo Startup",
+            // Add other necessary user properties
+            ...(role === "startup" ? { companyName: "Demo Company" } : {}),
+          };
+          
+          setUser(mockUser);
+          setIsAuthenticated(true);
+          setIsLoading(false);
+          return { user: mockUser };
+        }
+        
+        // For non-demo accounts or other errors, throw the error
+        throw error;
+      }
+
+      if (data.user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        setUser({
+          id: data.user.id,
+          email: data.user.email!,
+          ...profileData,
+        });
+        setIsAuthenticated(true);
+      }
+      
+      return data;
     } catch (error) {
-      console.error("Google login error:", error);
+      console.error("Login error:", error);
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const signup = async (
-    email: string, 
-    password: string, 
-    name: string, 
-    role: "student" | "startup",
-    profileData?: Record<string, any>
-  ) => {
+  const signup = async (email: string, password: string, userData: Partial<User>) => {
     try {
-      // Create auth user
-      const { data: authData } = await signUp(email, password);
-      
-      if (!authData.user) {
-        throw new Error("User creation failed");
-      }
-      
-      // Create profile with additional data
-      const userData = {
-        id: authData.user.id,
+      // Create auth user in Supabase
+      const { data, error } = await supabase.auth.signUp({
         email,
-        name,
-        role,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        ...profileData
-      };
-      
-      // In a real app, you would save this to your database
-      // For now, we'll just simulate a successful creation
-      
-      // Set the user in state
-      setUser(userData);
-      setIsAuthenticated(true);
-      
-      return userData;
-    } catch (error) {
+        password,
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        // Create user profile in database
+        const newUser = await createUser({
+          id: data.user.id,
+          email,
+          ...userData,
+        });
+
+        if (newUser) {
+          setUser(newUser);
+          return { success: true, userId: newUser.id };
+        }
+      }
+
+      return { success: false, error: "Failed to create user profile" };
+    } catch (error: any) {
       console.error("Signup error:", error);
-      throw error;
+      return { success: false, error: error.message || "Failed to sign up" };
     }
   };
 
   const logout = async () => {
     try {
-      setIsLoading(true);
-      
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await supabase.auth.signOut();
       setUser(null);
       setIsAuthenticated(false);
-      localStorage.removeItem("user");
-      
-      toast({
-        title: "Signed out",
-        description: "You've been successfully signed out.",
-      });
     } catch (error) {
       console.error("Logout error:", error);
-      toast({
-        title: "Logout failed",
-        description: error instanceof Error ? error.message : "An error occurred during sign out.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const updateUserProfile = async (userData: Partial<User>) => {
+  const updateUserProfile = async (userId: string, userData: Partial<User>) => {
     try {
-      setIsLoading(true);
+      const updatedUser = await updateUser(userId, userData);
       
-      if (!user) {
-        throw new Error("Not authenticated");
+      if (updatedUser && user && userId === user.id) {
+        setUser(updatedUser);
       }
       
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const updatedUser = {
-        ...user,
-        ...userData,
-        updatedAt: new Date()
-      };
-      
-      // Update in mock data
-      const userIndex = mockUsers.findIndex(u => u.id === user.id);
-      if (userIndex >= 0) {
-        mockUsers[userIndex] = updatedUser;
-      }
-      
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      
-      return;
+      return !!updatedUser;
     } catch (error) {
-      console.error("Profile update error:", error);
-      toast({
-        title: "Update failed",
-        description: error instanceof Error ? error.message : "Failed to update profile. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    } finally {
-      setIsLoading(false);
+      console.error("Update profile error:", error);
+      return false;
     }
-  };
-
-  // Mock function to get applications for a startup
-  const getApplications = async (): Promise<Application[]> => {
-    // In a real app, this would fetch from the backend
-    if (user?.role !== 'startup') return [];
-
-    // Mock applications data
-    const mockApplications: Application[] = [
-      {
-        id: "app1",
-        userId: "user1",
-        user: {
-          id: "user1",
-          email: "student1@example.com",
-          name: "John Student",
-          role: "student",
-          skills: ["React", "Node.js"],
-          experienceLevel: "intermediate",
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        problemId: "1",
-        problem: {
-          id: "1",
-          title: "Develop a Mobile App UI/UX",
-          description: "We need a talented UI/UX designer...",
-          startupId: user.id,
-          requiredSkills: ["UI/UX", "Figma"],
-          experienceLevel: "intermediate",
-          status: "open",
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        coverLetter: "I am very interested in this opportunity...",
-        status: "pending",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: "app2",
-        userId: "user2",
-        user: {
-          id: "user2",
-          email: "student2@example.com",
-          name: "Jane Student",
-          role: "student",
-          skills: ["UI/UX", "Figma", "Adobe XD"],
-          experienceLevel: "advanced",
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        problemId: "1",
-        problem: {
-          id: "1",
-          title: "Develop a Mobile App UI/UX",
-          description: "We need a talented UI/UX designer...",
-          startupId: user.id,
-          requiredSkills: ["UI/UX", "Figma"],
-          experienceLevel: "intermediate",
-          status: "open",
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        coverLetter: "I have extensive experience with mobile app design...",
-        status: "pending",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
-
-    return mockApplications;
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        isLoading,
         isAuthenticated,
+        isLoading,
         login,
-        loginWithGoogle,
         signup,
         logout,
-        getApplications,
-        updateUserProfile
+        updateUserProfile,
       }}
     >
       {children}

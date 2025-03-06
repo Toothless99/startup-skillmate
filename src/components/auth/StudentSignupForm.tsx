@@ -27,6 +27,12 @@ const StudentSignupForm = ({ email, password, name, onBack, onSuccess }: Student
   const [experienceLevel, setExperienceLevel] = useState<"beginner" | "intermediate" | "advanced">("beginner");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [bio, setBio] = useState("");
+  const [location, setLocation] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [portfolioUrl, setPortfolioUrl] = useState("");
   
   const skillOptions = [
     { label: "React", value: "React" },
@@ -74,30 +80,47 @@ const StudentSignupForm = ({ email, password, name, onBack, onSuccess }: Student
       return;
     }
     
+    setIsSubmitting(true);
+    
     try {
-      setIsSubmitting(true);
-      
-      // Create the user with additional profile data
-      await signup(email, password, name, "student", {
+      // Create the user profile data
+      const userData = {
+        name,
+        role: "student" as const,
         university,
         major,
         graduationYear,
         experienceLevel,
         skills: selectedSkills,
+        bio: bio || undefined,
+        location: location || undefined,
+        languages: selectedLanguages,
         areasOfInterest: selectedInterests,
-      });
+        githubUrl: githubUrl || undefined,
+        linkedinUrl: linkedinUrl || undefined,
+        portfolioUrl: portfolioUrl || undefined,
+      };
       
-      toast({
-        title: "Account created!",
-        description: "Your student account has been created successfully.",
-      });
+      // Call the signup method from AuthContext
+      const result = await signup(email, password, userData);
       
-      onSuccess();
-    } catch (error) {
-      console.error("Error creating student account:", error);
+      if (result.success) {
+        toast({
+          title: "Account created!",
+          description: "Your student account has been successfully created.",
+        });
+        onSuccess();
+      } else {
+        toast({
+          title: "Error creating account",
+          description: result.error || "There was a problem creating your account.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to create your account. Please try again.",
+        description: error.message || "An unexpected error occurred.",
         variant: "destructive",
       });
     } finally {

@@ -1,131 +1,130 @@
+import { useState } from "react";
 import { Problem } from "@/lib/types";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Briefcase, Tag, Building2, Info } from "lucide-react";
-import { format } from "date-fns";
-import { Link } from "react-router-dom";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useAuth } from "@/context/AuthContext";
+import AuthModal from "@/components/auth/AuthModal";
+import ApplicationForm from "@/components/applications/ApplicationForm";
 
 interface ProblemCardProps {
   problem: Problem;
-  onApply?: (problemId: string) => void;
   onViewDetails?: (problemId: string) => void;
-  isFeatured?: boolean;
 }
 
-const ProblemCard = ({ problem, onApply, onViewDetails, isFeatured }: ProblemCardProps) => {
-  // Handle status badge display
-  const getStatusBadge = () => {
-    switch (problem.status) {
-      case "open":
-        return <Badge>Open</Badge>;
-      case "in_progress":
-        return <Badge variant="secondary">In Progress</Badge>;
-      case "completed":
-        return <Badge variant="outline">Completed</Badge>;
-      case "cancelled":
-        return <Badge variant="destructive">Cancelled</Badge>;
-      default:
-        return <Badge variant="outline">Draft</Badge>;
+const ProblemCard = ({ problem, onViewDetails }: ProblemCardProps) => {
+  const { user, isAuthenticated } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
+  
+  const handleApplyClick = () => {
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      return;
     }
+    
+    if (user?.role !== "student") {
+      // Only students can apply
+      return;
+    }
+    
+    setIsApplicationModalOpen(true);
+  };
+  
+  const handleViewDetails = () => {
+    if (onViewDetails) {
+      onViewDetails(problem.id);
+    }
+  };
+  
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   return (
-    <Card className={`overflow-hidden transition-all duration-300 hover:shadow-md ${isFeatured ? 'border-primary/20' : ''}`}>
-      {isFeatured && (
-        <div className="bg-primary text-primary-foreground text-xs font-medium px-3 py-1">
-          Featured
-        </div>
-      )}
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg">{problem.title}</CardTitle>
-            {problem.startup && (
-              <CardDescription className="mt-1 hover:underline">
-                <Link to={`/startups/${problem.startupId}`}>
-                  <span className="flex items-center">
-                    <Building2 className="h-3 w-3 mr-1" />
-                    {problem.startup?.companyName || problem.startup?.name || "Anonymous Startup"}
-                  </span>
-                </Link>
-              </CardDescription>
-            )}
+    <>
+      <Card className="h-full flex flex-col">
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="text-lg font-semibold line-clamp-2">{problem.title}</h3>
+              <p className="text-sm text-muted-foreground">
+                {problem.startup?.name || "Unknown Startup"}
+              </p>
+            </div>
+            <Badge variant={problem.status === "open" ? "default" : "secondary"}>
+              {problem.status === "open" ? "Open" : "Closed"}
+            </Badge>
           </div>
-          {getStatusBadge()}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm line-clamp-3">{problem.description}</p>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground flex items-center">
-              <Tag className="mr-1 h-3 w-3" /> Skills
-            </p>
+        </CardHeader>
+        <CardContent className="flex-grow">
+          <p className="text-sm mb-4 line-clamp-3">{problem.description}</p>
+          <div className="space-y-2">
             <div className="flex flex-wrap gap-1">
-              {problem.requiredSkills.slice(0, 3).map((skill) => (
-                <Badge key={skill} variant="outline" className="text-xs">
+              {problem.requiredSkills.slice(0, 3).map((skill, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
                   {skill}
                 </Badge>
               ))}
               {problem.requiredSkills.length > 3 && (
                 <Badge variant="outline" className="text-xs">
-                  +{problem.requiredSkills.length - 3}
+                  +{problem.requiredSkills.length - 3} more
                 </Badge>
               )}
             </div>
-          </div>
-
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground flex items-center">
-              <Briefcase className="mr-1 h-3 w-3" /> Experience
-            </p>
-            <p className="text-sm capitalize">
-              {problem.experienceLevel}
-            </p>
-          </div>
-
-          {problem.compensation && (
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Compensation</p>
-              <p className="text-sm">{problem.compensation}</p>
+            <div className="text-sm">
+              <span className="font-medium">Experience:</span> {problem.experienceLevel.charAt(0).toUpperCase() + problem.experienceLevel.slice(1)}
             </div>
-          )}
-
-          {problem.deadline && (
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground flex items-center">
-                <Calendar className="mr-1 h-3 w-3" /> Deadline
-              </p>
-              <p className="text-sm">
-                {format(new Date(problem.deadline), "MMM d, yyyy")}
-              </p>
-            </div>
-          )}
-        </div>
-      </CardContent>
-      <CardFooter className="flex justify-between border-t pt-4">
-        <div className="text-xs text-muted-foreground flex items-center">
-          <Clock className="mr-1 h-3 w-3" />
-          Posted {format(new Date(problem.createdAt), "MMM d, yyyy")}
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            size="sm" 
-            variant="outline" 
-            onClick={() => onViewDetails && onViewDetails(problem.id)}
-          >
-            <Info className="mr-1 h-4 w-4" /> Details
+            {problem.compensation && (
+              <div className="text-sm">
+                <span className="font-medium">Compensation:</span> {problem.compensation}
+              </div>
+            )}
+            {problem.deadline && (
+              <div className="text-sm">
+                <span className="font-medium">Deadline:</span> {formatDate(problem.deadline)}
+              </div>
+            )}
+          </div>
+        </CardContent>
+        <CardFooter className="flex gap-2">
+          <Button variant="outline" className="flex-1" onClick={handleViewDetails}>
+            View Details
           </Button>
-          {problem.status === "open" && onApply && (
-            <Button size="sm" onClick={() => onApply(problem.id)}>
+          {problem.status === "open" && user?.role === "student" && (
+            <Button className="flex-1" onClick={handleApplyClick}>
               Apply Now
             </Button>
           )}
-        </div>
-      </CardFooter>
-    </Card>
+        </CardFooter>
+      </Card>
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+      />
+      
+      {/* Application Modal */}
+      <Dialog open={isApplicationModalOpen} onOpenChange={setIsApplicationModalOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogTitle>Apply to Problem</DialogTitle>
+          <ApplicationForm 
+            problem={problem}
+            onClose={() => setIsApplicationModalOpen(false)}
+            onSuccess={() => {
+              // You could update the UI to show the user has applied
+              console.log("Application submitted successfully");
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

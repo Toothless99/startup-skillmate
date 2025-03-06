@@ -12,8 +12,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, User as UserIcon, Settings, Plus } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger
+} from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import NewProblemForm from "@/components/problems/NewProblemForm";
 
 const Navbar = () => {
   const location = useLocation();
@@ -21,6 +28,7 @@ const Navbar = () => {
   const { theme, setTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isNewProblemDialogOpen, setIsNewProblemDialogOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState<"login" | "signup">("login");
   
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -63,190 +71,176 @@ const Navbar = () => {
     await logout();
   };
   
+  const handlePostProblemClick = () => {
+    if (isAuthenticated) {
+      setIsNewProblemDialogOpen(true);
+    } else {
+      setIsAuthModalOpen(true);
+    }
+  };
+  
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-background/80 border-b border-border">
-      <div className="max-container flex items-center justify-between h-16 px-4">
-        <Link 
-          to="/" 
-          className="flex items-center space-x-2"
-          onClick={closeMenu}
-        >
-          <PanelLeft className="h-6 w-6" />
-          <span className="font-display text-xl font-semibold">SkillMate</span>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <Link to="/" className="flex items-center font-semibold mr-4">
+          <span className="hidden sm:inline-block">SkillMate</span>
         </Link>
         
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6">
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive(link.path)
-                  ? "text-primary"
-                  : "text-muted-foreground"
-              }`}
-            >
-              {link.name}
-            </Link>
-          ))}
-        </nav>
+        <div className="flex items-center space-x-1 md:space-x-2">
+          <Link to="/">
+            <Button variant={location.pathname === "/" ? "default" : "ghost"} size="sm">
+              Home
+            </Button>
+          </Link>
+          <Link to="/problems">
+            <Button variant={location.pathname === "/problems" ? "default" : "ghost"} size="sm">
+              Problems
+            </Button>
+          </Link>
+          <Link to="/solvers">
+            <Button variant={location.pathname === "/solvers" ? "default" : "ghost"} size="sm">
+              Solvers
+            </Button>
+          </Link>
+          <Link to="/startups">
+            <Button variant={location.pathname === "/startups" ? "default" : "ghost"} size="sm">
+              Startups
+            </Button>
+          </Link>
+        </div>
         
-        <div className="hidden md:flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            aria-label="Toggle theme"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
-          </Button>
-          
+        <div className="flex-1"></div>
+        
+        <div className="hidden md:flex items-center space-x-2">
           {isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>
-                      {user?.name ? getInitials(user.name) : "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <div className="flex items-center justify-start gap-2 p-2">
-                  <div className="flex flex-col space-y-1 leading-none">
-                    <p className="font-medium">{user?.name}</p>
-                    <p className="text-sm text-muted-foreground">{user?.email}</p>
-                  </div>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/profile" className="cursor-pointer w-full flex items-center">
-                    <UserIcon className="mr-2 h-4 w-4" />
-                    Profile
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
             <>
-              <Button variant="ghost" onClick={handleOpenLogin}>
-                Sign In
-              </Button>
-              <Button onClick={handleOpenSignup}>
-                Sign Up
-              </Button>
+              {user?.role === "startup" && (
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  className="flex items-center"
+                  onClick={handlePostProblemClick}
+                >
+                  <Plus className="mr-1 h-4 w-4" />
+                  Post Problem
+                </Button>
+              )}
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user?.avatarUrl} alt={user?.name} />
+                      <AvatarFallback>{user?.name ? getInitials(user.name) : "U"}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout}>
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
+          ) : (
+            <Button variant="default" size="sm" onClick={() => setIsAuthModalOpen(true)}>
+              Sign In
+            </Button>
           )}
         </div>
         
-        {/* Mobile Menu Button */}
-        <div className="flex items-center md:hidden">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            aria-label="Toggle theme"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-5 w-5" />
-            ) : (
-              <Moon className="h-5 w-5" />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleMenu}
-            aria-label="Toggle menu"
-          >
-            {isMenuOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-          </Button>
-        </div>
-      </div>
-      
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden absolute top-16 inset-x-0 bg-background border-b border-border animate-in slide-in-from-top">
-          <div className="px-4 py-3 space-y-3">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`block text-sm font-medium transition-colors hover:text-primary ${
-                  isActive(link.path)
-                    ? "text-primary"
-                    : "text-muted-foreground"
-                }`}
-                onClick={closeMenu}
-              >
-                {link.name}
+        <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+          <SheetTrigger asChild className="md:hidden">
+            <Button variant="ghost" size="icon" className="md:hidden">
+              {isMenuOpen ? <X /> : <Menu />}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right">
+            <div className="flex flex-col space-y-4 mt-4">
+              <Link to="/" onClick={closeMenu}>
+                <Button variant="ghost" className="w-full justify-start">Home</Button>
               </Link>
-            ))}
-            
-            {isAuthenticated ? (
-              <div className="pt-2 border-t border-border">
-                <div className="flex items-center space-x-3 mb-3">
-                  {user?.avatarUrl ? (
-                    <img
-                      src={user.avatarUrl}
-                      alt={user.name}
-                      className="h-8 w-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <UserIcon className="h-4 w-4" />
-                    </div>
+              <Link to="/problems" onClick={closeMenu}>
+                <Button variant="ghost" className="w-full justify-start">Problems</Button>
+              </Link>
+              <Link to="/solvers" onClick={closeMenu}>
+                <Button variant="ghost" className="w-full justify-start">Solvers</Button>
+              </Link>
+              <Link to="/startups" onClick={closeMenu}>
+                <Button variant="ghost" className="w-full justify-start">Startups</Button>
+              </Link>
+              
+              {isAuthenticated ? (
+                <>
+                  <Link to="/profile" onClick={closeMenu}>
+                    <Button variant="ghost" className="w-full justify-start">Profile</Button>
+                  </Link>
+                  
+                  {user?.role === "startup" && (
+                    <Button 
+                      variant="default" 
+                      className="w-full justify-start"
+                      onClick={() => {
+                        closeMenu();
+                        handlePostProblemClick();
+                      }}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Post Problem
+                    </Button>
                   )}
-                  <span className="text-sm font-medium">{user?.name}</span>
-                </div>
+                  
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-destructive"
+                    onClick={() => {
+                      logout();
+                      closeMenu();
+                    }}
+                  >
+                    Log out
+                  </Button>
+                </>
+              ) : (
                 <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={handleLogout}
-                >
-                  Sign Out
-                </Button>
-              </div>
-            ) : (
-              <div className="pt-2 border-t border-border">
-                <Button 
+                  variant="default" 
                   className="w-full"
                   onClick={() => {
-                    handleOpenLogin();
+                    setIsAuthModalOpen(true);
                     closeMenu();
                   }}
                 >
                   Sign In
                 </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
       
+      {/* Auth Modal */}
       <AuthModal 
         isOpen={isAuthModalOpen} 
         onClose={() => setIsAuthModalOpen(false)} 
-        defaultTab={authModalTab}
       />
+      
+      {/* New Problem Dialog */}
+      <Dialog open={isNewProblemDialogOpen} onOpenChange={setIsNewProblemDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogTitle>Post a New Problem</DialogTitle>
+          <NewProblemForm 
+            onClose={() => setIsNewProblemDialogOpen(false)}
+            onSuccess={(newProblem) => {
+              console.log("New problem created:", newProblem);
+              // You could add the new problem to a context or redirect to the problem page
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </header>
   );
 };

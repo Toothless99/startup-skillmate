@@ -1,4 +1,3 @@
-
 // First few lines of the file
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -136,7 +135,7 @@ const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onView
   
   useEffect(() => {
     // Initialize problems
-    let allProblems = initialProblems || mockProblems;
+    let allProblems = initialProblems?.length ? initialProblems : mockProblems;
     
     // If startupId is provided, filter problems for that specific startup
     if (startupId) {

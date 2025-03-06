@@ -1,60 +1,81 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ProblemList from "@/components/problems/ProblemList";
-import NewProblemDialog from "@/components/problems/NewProblemDialog";
+import { Problem } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import NewProblemForm from "@/components/problems/NewProblemForm";
 import { useAuth } from "@/context/AuthContext";
-import { AuthButton, AuthGuard } from "@/components/auth/AuthGuard";
-import { Problem } from "@/lib/types";
+import AuthModal from "@/components/auth/AuthModal";
 
 const Problems = () => {
-  const [isNewProblemDialogOpen, setIsNewProblemDialogOpen] = useState(false);
+  const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
   const [problems, setProblems] = useState<Problem[]>([]);
-  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isNewProblemDialogOpen, setIsNewProblemDialogOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  useEffect(() => {
+    // In a real app, this would fetch problems from your API
+    // For now, we'll use the mock data in ProblemList
+    setIsLoading(false);
+  }, []);
+
+  const handlePostProblemClick = () => {
+    if (isAuthenticated) {
+      setIsNewProblemDialogOpen(true);
+    } else {
+      setIsAuthModalOpen(true);
+    }
+  };
 
   const handleNewProblemSuccess = (newProblem: Problem) => {
-    setProblems((prev) => [newProblem, ...prev]);
+    // Add the new problem to the list
+    setProblems((prevProblems) => [newProblem, ...prevProblems]);
+    
+    toast({
+      title: "Problem posted successfully!",
+      description: "Your problem has been published and is now visible to solvers.",
+    });
   };
 
   return (
-    <div className="max-container pt-24 px-4 pb-16">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-1">Problems</h1>
-          <p className="text-muted-foreground">
-            Browse real-world problems posted by startups and apply to solve them
-          </p>
+    <div className="container mx-auto px-4 md:px-6 max-w-7xl">
+      <div className="py-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Problems</h1>
+          
+          {user?.role === "startup" && (
+            <Button onClick={handlePostProblemClick}>
+              <Plus className="mr-2 h-4 w-4" />
+              Post Problem
+            </Button>
+          )}
         </div>
-
-        {user?.role === "startup" && (
-          <Button 
-            onClick={() => setIsNewProblemDialogOpen(true)}
-            className="flex items-center"
-          >
-            <Plus className="mr-1 h-4 w-4" /> Post a Problem
-          </Button>
-        )}
+        
+        <ProblemList 
+          initialProblems={problems}
+          onViewDetails={(id) => console.log("View details for problem:", id)}
+        />
       </div>
-
-      <AuthGuard
-        fallback={
-          <div className="bg-muted/30 p-6 rounded-lg border border-dashed text-center">
-            <h3 className="font-medium text-lg mb-2">Featured Problems</h3>
-            <p className="text-muted-foreground mb-6">
-              Sign in to see all available problems from startups
-            </p>
-            <ProblemList initialProblems={[]} featuredOnly={true} />
-          </div>
-        }
-      >
-        <ProblemList initialProblems={problems} />
-      </AuthGuard>
-
-      <NewProblemDialog
-        isOpen={isNewProblemDialogOpen}
-        onClose={() => setIsNewProblemDialogOpen(false)}
-        onSuccess={handleNewProblemSuccess}
+      
+      {/* New Problem Dialog */}
+      <Dialog open={isNewProblemDialogOpen} onOpenChange={setIsNewProblemDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogTitle>Post a New Problem</DialogTitle>
+          <NewProblemForm 
+            onClose={() => setIsNewProblemDialogOpen(false)}
+            onSuccess={handleNewProblemSuccess}
+          />
+        </DialogContent>
+      </Dialog>
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
       />
     </div>
   );

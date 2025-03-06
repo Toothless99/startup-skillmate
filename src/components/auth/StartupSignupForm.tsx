@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -10,13 +9,15 @@ import { Badge } from "@/components/ui/badge";
 import { X, Plus, Briefcase, Globe, Linkedin, Users, ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { z } from "zod";
 
 interface StartupSignupFormProps {
   email: string;
   password: string;
   name: string;
-  onSuccess?: () => void;
+  onBack: () => void;
+  onSuccess: () => void;
 }
 
 // Create schema for validation
@@ -30,7 +31,7 @@ const startupSchema = z.object({
   hiringStatus: z.enum(["hiring", "not_hiring", "future_hiring"])
 });
 
-const StartupSignupForm = ({ email, password, name, onSuccess }: StartupSignupFormProps) => {
+const StartupSignupForm = ({ email, password, name, onBack, onSuccess }: StartupSignupFormProps) => {
   const { signup, updateUserProfile } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -148,7 +149,7 @@ const StartupSignupForm = ({ email, password, name, onSuccess }: StartupSignupFo
         description: "You're now ready to post problems and find talented students.",
       });
       
-      onSuccess?.();
+      onSuccess();
     } catch (error) {
       console.error(error);
       toast({

@@ -17,6 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import StudentProfileForm from "@/components/profile/StudentProfileForm";
 import StartupProfileForm from "@/components/profile/StartupProfileForm";
 import { useToast } from "@/hooks/use-toast";
+import ApplicationsTab from "@/components/profile/ApplicationsTab";
+import StudentApplicationsTab from "@/components/profile/StudentApplicationsTab";
 
 const interestOptions = [
   "SaaS", "E-commerce", "Fintech", "EdTech", "HealthTech", "AI",
@@ -202,9 +204,12 @@ const Profile = () => {
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md" style={{ gridTemplateColumns: user?.role === 'startup' ? '1fr 1fr 1fr' : '1fr 1fr' }}>
+          <TabsList className="grid w-full max-w-md" style={{ gridTemplateColumns: user?.role === 'startup' ? '1fr 1fr 1fr' : '1fr 1fr 1fr' }}>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="edit">Edit Profile</TabsTrigger>
+            {user?.role === 'student' && (
+              <TabsTrigger value="applications">My Applications</TabsTrigger>
+            )}
             {user?.role === 'startup' && (
               <TabsTrigger value="applications">Applications</TabsTrigger>
             )}
@@ -222,9 +227,15 @@ const Profile = () => {
             )}
           </TabsContent>
           
+          {user?.role === 'student' && (
+            <TabsContent value="applications" className="space-y-6">
+              <StudentApplicationsTab />
+            </TabsContent>
+          )}
+          
           {user?.role === 'startup' && (
             <TabsContent value="applications" className="space-y-6">
-              <ApplicationsList />
+              <ApplicationsTab />
             </TabsContent>
           )}
         </Tabs>

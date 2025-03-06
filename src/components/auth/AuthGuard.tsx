@@ -1,52 +1,59 @@
-
 import { ReactNode, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import AuthModal from "./AuthModal";
 import { Button } from "@/components/ui/button";
+import AuthModal from "./AuthModal";
 
 interface AuthGuardProps {
   children: ReactNode;
+  requiredRole?: "student" | "startup" | "admin";
   fallback?: ReactNode;
-  redirectTo?: string;
 }
 
 /**
  * AuthGuard - Protects content that requires authentication
  * 
  * @param children - The protected content to show if authenticated
- * @param fallback - Optional custom fallback to show if not authenticated
- * @param redirectTo - Optional path to redirect to after successful authentication
+ * @param requiredRole - Optional role required to access the content
+ * @param fallback - Optional fallback content to show if not authenticated
  */
-export const AuthGuard = ({ children, fallback, redirectTo }: AuthGuardProps) => {
-  const { isAuthenticated } = useAuth();
+export const AuthGuard = ({ children, requiredRole, fallback }: AuthGuardProps) => {
+  const { user, isAuthenticated } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  if (isAuthenticated) {
-    return <>{children}</>;
+  if (!isAuthenticated) {
+    if (fallback) {
+      return <>{fallback}</>;
+    }
+    
+    return (
+      <div className="bg-muted/20 rounded-lg border border-dashed p-8 text-center">
+        <h3 className="text-lg font-medium mb-2">Sign in required</h3>
+        <p className="text-muted-foreground mb-4">
+          You need to sign in to access this content
+        </p>
+        <Button onClick={() => setIsAuthModalOpen(true)}>
+          Sign In
+        </Button>
+        <AuthModal 
+          isOpen={isAuthModalOpen} 
+          onClose={() => setIsAuthModalOpen(false)}
+        />
+      </div>
+    );
   }
 
-  // If a custom fallback is provided, use it
-  if (fallback) {
-    return <>{fallback}</>;
+  if (requiredRole && user?.role !== requiredRole) {
+    return (
+      <div className="bg-muted/20 rounded-lg border border-dashed p-8 text-center">
+        <h3 className="text-lg font-medium mb-2">Access restricted</h3>
+        <p className="text-muted-foreground mb-4">
+          You need to be a {requiredRole} to access this content
+        </p>
+      </div>
+    );
   }
 
-  // Default fallback with sign in prompt
-  return (
-    <div className="bg-muted/20 rounded-lg border border-dashed p-8 text-center">
-      <h3 className="text-lg font-medium mb-2">Sign in required</h3>
-      <p className="text-muted-foreground mb-4">
-        You need to sign in to access this content
-      </p>
-      <Button onClick={() => setIsAuthModalOpen(true)}>
-        Sign In
-      </Button>
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)}
-        redirectTo={redirectTo}
-      />
-    </div>
-  );
+  return <>{children}</>;
 };
 
 /**
@@ -119,3 +126,4 @@ export const AuthButton = ({
     </>
   );
 };
+export default AuthGuard;

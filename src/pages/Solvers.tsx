@@ -1,29 +1,33 @@
-
-import { AuthGuard } from "@/components/auth/AuthGuard";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import SolverList from "@/components/solvers/SolverList";
+import AuthGuard from "@/components/auth/AuthGuard";
+import { User } from "@/lib/types";
 
 const Solvers = () => {
-  return (
-    <div className="max-container pt-24 px-4 pb-16">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-1">Problem Solvers</h1>
-        <p className="text-muted-foreground">
-          Connect with skilled students and professionals ready to solve your problems
-        </p>
-      </div>
+  const navigate = useNavigate();
+  const [featuredSolvers] = useState<User[]>([]);
 
-      <AuthGuard
-        fallback={
-          <div className="bg-muted/30 p-6 rounded-lg border border-dashed text-center">
-            <h3 className="font-medium text-lg mb-2">Featured Solvers</h3>
-            <p className="text-muted-foreground mb-6">
-              Sign in to see all solvers on the platform
+  const handleViewProfile = (solverId: string) => {
+    navigate(`/solvers/${solverId}`);
+  };
+
+  return (
+    <div className="container mx-auto px-4 md:px-6 max-w-7xl">
+      <AuthGuard>
+        <div className="py-8">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold">Solvers</h1>
+            <p className="text-muted-foreground mt-2">
+              Find talented students to help with your projects
             </p>
-            <SolverList featuredOnly={true} />
           </div>
-        }
-      >
-        <SolverList featuredOnly={false} />
+          
+          <SolverList 
+            initialSolvers={featuredSolvers}
+            onViewProfile={handleViewProfile}
+          />
+        </div>
       </AuthGuard>
     </div>
   );

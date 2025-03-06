@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,39 +82,49 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
     try {
       setIsSubmitting(true);
       
-      // In a real app, this would send the data to your backend
-      // For now, we'll just simulate a successful submission
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Create a new problem object to add to the list
-      const newProblem: Problem = {
-        id: `prob-${Date.now()}`, // In a real app, this would come from the backend
+      // Create a new problem object
+      const newProblem: Omit<Problem, 'id' | 'createdAt' | 'updatedAt'> = {
         title: formData.title,
         description: formData.description,
-        startupId: user.id, // Use the startup ID instead of name
-        startup: user, // Reference the full user object
+        startupId: user.id,
+        startup: user,
         requiredSkills,
         experienceLevel: formData.experienceLevel,
-        compensation: formData.compensation || undefined,
+        compensation: formData.compensation,
         deadline: formData.deadline || undefined,
         status: "open",
         featured: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        additionalInfo: formData.additionalInfo || undefined
+        additionalInfo: formData.additionalInfo
       };
       
+      // In a real app, you would save this to your database
+      // For now, we'll just simulate a successful creation
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Add an ID and timestamps to simulate a database response
+      const createdProblem: Problem = {
+        ...newProblem,
+        id: `problem-${Date.now()}`,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      // Call the success callback
+      onSuccess?.(createdProblem);
+      
+      // Close the form
+      onClose();
+      
       toast({
-        title: "Problem posted successfully!",
+        title: "Problem posted!",
         description: "Your problem has been published and is now visible to solvers.",
       });
-      
-      onSuccess?.(newProblem);
-      onClose();
     } catch (error) {
-      console.error(error);
+      console.error("Error posting problem:", error);
       toast({
-        title: "Error",
+        title: "Failed to post problem",
         description: "Failed to post problem. Please try again.",
         variant: "destructive",
       });
@@ -262,4 +271,4 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
   );
 };
 
-export default NewProblemForm;
+export default NewProblemForm; 

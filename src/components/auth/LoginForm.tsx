@@ -34,7 +34,6 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
     try {
       setIsLoading(true);
       setError("");
-      
       await login(formData.email, formData.password);
       onSuccess?.();
     } catch (error) {

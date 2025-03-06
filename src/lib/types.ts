@@ -1,4 +1,3 @@
-
 export interface User {
   id: string
   email: string
@@ -79,12 +78,14 @@ export interface Problem {
 
 export interface Application {
   id: string
-  userId: string
-  user?: User
   problemId: string
   problem?: Problem
+  userId: string
+  user?: User
+  startupId: string
+  startup?: User
+  status: 'pending' | 'accepted' | 'rejected'
   coverLetter?: string
-  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn'
   createdAt: Date
   updatedAt: Date
 }

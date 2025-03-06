@@ -8,6 +8,8 @@ import { useAuth } from "@/context/AuthContext";
 import StartupSignupForm from "./StartupSignupForm";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SignupFormProps {
   onSuccess?: () => void;
@@ -33,6 +35,7 @@ const SignupForm = ({ onSuccess }: SignupFormProps) => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [step, setStep] = useState(1);
+  const [generalError, setGeneralError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -41,10 +44,13 @@ const SignupForm = ({ onSuccess }: SignupFormProps) => {
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: "" }));
     }
+    // Clear general error as well
+    setGeneralError("");
   };
 
   const handleRoleChange = (value: "student" | "startup") => {
     setFormData(prev => ({ ...prev, role: value }));
+    setGeneralError("");
   };
 
   const validateForm = () => {
@@ -69,6 +75,8 @@ const SignupForm = ({ onSuccess }: SignupFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    setGeneralError("");
+    
     if (!validateForm()) {
       return;
     }
@@ -84,6 +92,7 @@ const SignupForm = ({ onSuccess }: SignupFormProps) => {
       }
       
       // For students, complete signup immediately
+      console.log('Submitting student signup:', formData.email, formData.password, formData.name, formData.role);
       await signup(formData.email, formData.password, formData.name, formData.role);
       
       toast({
@@ -93,12 +102,15 @@ const SignupForm = ({ onSuccess }: SignupFormProps) => {
       
       onSuccess?.();
     } catch (error) {
-      console.error("Signup error:", error);
-      toast({
-        title: "Signup failed",
-        description: error instanceof Error ? error.message : "Signup failed. Please try again.",
-        variant: "destructive",
-      });
+      console.error("Signup form error:", error);
+      
+      // Show error in the form
+      if (error instanceof Error) {
+        setGeneralError(error.message);
+      } else {
+        setGeneralError("An unexpected error occurred. Please try again later.");
+      }
+      
     } finally {
       setIsLoading(false);
     }
@@ -117,6 +129,13 @@ const SignupForm = ({ onSuccess }: SignupFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 py-2">
+      {generalError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{generalError}</AlertDescription>
+        </Alert>
+      )}
+      
       <div className="space-y-2">
         <Label htmlFor="name">Full Name <span className="text-red-500">*</span></Label>
         <Input

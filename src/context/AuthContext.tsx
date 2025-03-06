@@ -123,11 +123,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       
       // First sign up with email and password
+      console.log('Attempting to sign up user:', email);
       const { user: authUser } = await signUp(email, password);
       
       if (!authUser?.id) {
-        throw new Error("Failed to create account");
+        console.error('No user ID returned from signUp');
+        throw new Error("Failed to create account - no user ID returned");
       }
+      
+      console.log('User created successfully, creating profile');
       
       // Create the profile
       const newUser: Partial<User> = {
@@ -146,6 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         })
       };
       
+      console.log('Creating profile with data:', newUser);
       const createdUser = await createProfile(newUser);
       setUser(createdUser);
       
@@ -156,11 +161,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
     } catch (error) {
       console.error("Signup error:", error);
+      
+      // Create a more user-friendly error message
+      let errorMessage = "Failed to create your account.";
+      
+      if (error instanceof Error) {
+        // Handle specific error types
+        if (error.message.includes("profiles table does not exist")) {
+          errorMessage = "The database is not properly set up. Please contact support.";
+        } else if (error.message.includes("already registered")) {
+          errorMessage = "This email is already registered. Please try signing in instead.";
+        } else if (error.message.includes("Password")) {
+          errorMessage = error.message; // For password requirement errors
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Signup failed",
-        description: error instanceof Error ? error.message : "Please try again with different credentials.",
+        description: errorMessage,
         variant: "destructive",
       });
+      
       throw error;
     } finally {
       setIsLoading(false);

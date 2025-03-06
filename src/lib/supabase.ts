@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { User, Problem, Application } from './types';
 
@@ -27,13 +26,27 @@ const requireSupabase = () => {
 // Auth functions
 export const signUp = async (email: string, password: string) => {
   requireSupabase();
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  });
   
-  if (error) throw error;
-  return data;
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    
+    if (error) {
+      console.error('Supabase signUp error:', error);
+      throw error;
+    }
+    
+    if (!data.user) {
+      throw new Error('User creation failed - no user returned from Supabase');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error during signup process:', error);
+    throw error;
+  }
 };
 
 export const signIn = async (email: string, password: string) => {
@@ -81,13 +94,30 @@ export const getCurrentUser = async () => {
 // Profile functions
 export const createProfile = async (profile: Partial<User>) => {
   requireSupabase();
-  const { data, error } = await supabase
-    .from('profiles')
-    .insert([profile])
-    .select();
+  
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert([profile])
+      .select();
+      
+    if (error) {
+      console.error('Error creating profile:', error);
+      if (error.code === '42P01') {
+        throw new Error('The profiles table does not exist. Please set up your Supabase database with a profiles table.');
+      }
+      throw error;
+    }
     
-  if (error) throw error;
-  return data[0] as User;
+    if (!data || data.length === 0) {
+      throw new Error('Failed to create profile - no data returned');
+    }
+    
+    return data[0] as User;
+  } catch (error) {
+    console.error('Profile creation error:', error);
+    throw error;
+  }
 };
 
 export const updateProfile = async (id: string, updates: Partial<User>) => {

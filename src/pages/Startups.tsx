@@ -2,11 +2,6 @@
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import StartupList from "@/components/startups/StartupList";
 
-// Define interface for StartupList props
-interface StartupListProps {
-  featuredOnly?: boolean;
-}
-
 const Startups = () => {
   return (
     <div className="max-container pt-24 px-4 pb-16">
@@ -28,7 +23,7 @@ const Startups = () => {
           </div>
         }
       >
-        <StartupList />
+        <StartupList featuredOnly={false} />
       </AuthGuard>
     </div>
   );

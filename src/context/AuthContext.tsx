@@ -1,7 +1,17 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, Application } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  signIn, 
+  signUp, 
+  signInWithGoogle, 
+  signOut, 
+  getCurrentUser,
+  createProfile,
+  updateProfile,
+  getApplicationsForStartup,
+  supabase
+} from "@/lib/supabase";
 
 interface AuthContextType {
   user: User | null;
@@ -17,81 +27,60 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user data for demonstration
-const mockUsers: User[] = [
-  {
-    id: "user1",
-    email: "student@example.com",
-    name: "John Student",
-    role: "student" as const,
-    skills: ["React", "TypeScript", "Node.js"],
-    university: "Stanford University",
-    major: "Computer Science",
-    graduationYear: "2024",
-    experienceLevel: "intermediate" as const,
-    availability: {
-      status: "available" as const,
-      hours: 15
-    },
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: "user2",
-    email: "startup@example.com",
-    name: "Jane Founder",
-    role: "startup" as const,
-    companyName: "TechStartup Inc.",
-    companyDescription: "We're building the future of technology.",
-    sectors: ["SaaS", "AI"],
-    stage: "seed",
-    location: "San Francisco, CA",
-    hiringStatus: "hiring" as const,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-];
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
+  // Check if user is already logged in on page load
   useEffect(() => {
-    // Check for saved user in localStorage
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
+    const checkUser = async () => {
       try {
-        setUser(JSON.parse(savedUser));
+        const userData = await getCurrentUser();
+        setUser(userData);
       } catch (error) {
-        console.error("Failed to parse saved user:", error);
-        localStorage.removeItem("user");
+        console.error("Error fetching current user:", error);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+
+    checkUser();
+  }, []);
+
+  // Auth subscription to keep user state in sync
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session?.user?.id) {
+          try {
+            const userData = await getCurrentUser();
+            setUser(userData);
+          } catch (error) {
+            console.error("Error fetching user data:", error);
+          }
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      await signIn(email, password);
       
-      // In a real app, this would be an API call
-      // For demo, we'll use mock data
-      const foundUser = mockUsers.find(u => u.email === email);
-      
-      if (!foundUser) {
-        throw new Error("Invalid email or password");
-      }
-      
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setUser(foundUser);
-      localStorage.setItem("user", JSON.stringify(foundUser));
+      const userData = await getCurrentUser();
+      setUser(userData);
       
       toast({
         title: "Welcome back!",
-        description: `You've successfully signed in as ${foundUser.name}.`,
+        description: `You've successfully signed in as ${userData.name}.`,
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -107,31 +96,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginWithGoogle = async () => {
-    setIsLoading(true);
     try {
-      // Mock Google login - would use Supabase auth in real implementation
-      const mockUser: User = {
-        id: "123",
-        email: "user@example.com",
-        name: "Google User",
-        avatarUrl: "https://i.pravatar.cc/150?u=google",
-        role: "student",
-        skills: ["React", "JavaScript"],
-        languages: ["English"],
-        university: "State University",
-        major: "Computer Science",
-        graduationYear: "2023",
-        availability: { status: "available" },
-        experienceLevel: "intermediate",
-        areasOfInterest: ["SaaS", "Fintech"],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      setIsLoading(true);
+      await signInWithGoogle();
       
-      setUser(mockUser);
-      localStorage.setItem('skillmate-user', JSON.stringify(mockUser));
+      // Note: User will be set by the auth state change listener
+      toast({
+        title: "Welcome!",
+        description: "You've successfully signed in with Google.",
+      });
     } catch (error) {
       console.error("Google login error:", error);
+      toast({
+        title: "Login failed",
+        description: error instanceof Error ? error.message : "Failed to sign in with Google.",
+        variant: "destructive",
+      });
       throw error;
     } finally {
       setIsLoading(false);
@@ -142,48 +122,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
       
-      // Check if email already exists
-      if (mockUsers.some(u => u.email === email)) {
-        throw new Error("Email already in use");
+      // First sign up with email and password
+      const { user: authUser } = await signUp(email, password);
+      
+      if (!authUser?.id) {
+        throw new Error("Failed to create account");
       }
       
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Create new user with appropriate defaults based on role
-      const newUser: User = {
-        id: `user${Date.now()}`,
+      // Create the profile
+      const newUser: Partial<User> = {
+        id: authUser.id,
         email,
         name,
         role,
         createdAt: new Date(),
         updatedAt: new Date(),
         ...(role === 'student' ? {
-          university: '',
-          major: '',
-          graduationYear: '',
           experienceLevel: 'beginner' as const,
           availability: { status: 'available' as const }
         } : {
-          companyName: '',
-          companyDescription: '',
           stage: 'idea',
           hiringStatus: 'not_hiring' as const
         })
       };
       
-      // In a real app, this would be saved to a database
-      mockUsers.push(newUser);
-      
-      setUser(newUser);
-      localStorage.setItem("user", JSON.stringify(newUser));
+      const createdUser = await createProfile(newUser);
+      setUser(createdUser);
       
       toast({
         title: "Account created!",
         description: `Welcome to the platform, ${name}!`,
       });
       
-      return;
     } catch (error) {
       console.error("Signup error:", error);
       toast({
@@ -200,12 +170,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       setIsLoading(true);
-      
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await signOut();
       setUser(null);
-      localStorage.removeItem("user");
       
       toast({
         title: "Signed out",
@@ -231,25 +197,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error("Not authenticated");
       }
       
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const updatedUser = {
-        ...user,
+      const updatedUser = await updateProfile(user.id, {
         ...userData,
         updatedAt: new Date()
-      };
-      
-      // Update in mock data
-      const userIndex = mockUsers.findIndex(u => u.id === user.id);
-      if (userIndex >= 0) {
-        mockUsers[userIndex] = updatedUser;
-      }
+      });
       
       setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
       
-      return;
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been successfully updated.",
+      });
+      
     } catch (error) {
       console.error("Profile update error:", error);
       toast({
@@ -263,76 +222,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Mock function to get applications for a startup
   const getApplications = async (): Promise<Application[]> => {
-    // In a real app, this would fetch from the backend
-    if (user?.role !== 'startup') return [];
-
-    // Mock applications data
-    const mockApplications: Application[] = [
-      {
-        id: "app1",
-        userId: "user1",
-        user: {
-          id: "user1",
-          email: "student1@example.com",
-          name: "John Student",
-          role: "student",
-          skills: ["React", "Node.js"],
-          experienceLevel: "intermediate",
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        problemId: "1",
-        problem: {
-          id: "1",
-          title: "Develop a Mobile App UI/UX",
-          description: "We need a talented UI/UX designer...",
-          startupId: user.id,
-          requiredSkills: ["UI/UX", "Figma"],
-          experienceLevel: "intermediate",
-          status: "open",
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        coverLetter: "I am very interested in this opportunity...",
-        status: "pending",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: "app2",
-        userId: "user2",
-        user: {
-          id: "user2",
-          email: "student2@example.com",
-          name: "Jane Student",
-          role: "student",
-          skills: ["UI/UX", "Figma", "Adobe XD"],
-          experienceLevel: "advanced",
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        problemId: "1",
-        problem: {
-          id: "1",
-          title: "Develop a Mobile App UI/UX",
-          description: "We need a talented UI/UX designer...",
-          startupId: user.id,
-          requiredSkills: ["UI/UX", "Figma"],
-          experienceLevel: "intermediate",
-          status: "open",
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        coverLetter: "I have extensive experience with mobile app design...",
-        status: "pending",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
-
-    return mockApplications;
+    if (!user || user.role !== 'startup') return [];
+    
+    try {
+      return await getApplicationsForStartup(user.id);
+    } catch (error) {
+      console.error("Error fetching applications:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch applications. Please try again.",
+        variant: "destructive",
+      });
+      return [];
+    }
   };
 
   return (

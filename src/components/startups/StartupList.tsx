@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,64 +7,51 @@ import { Input } from "@/components/ui/input";
 import { Building2, Search, MapPin, Users, ExternalLink } from "lucide-react";
 import { User } from "@/lib/types";
 import { Link } from "react-router-dom";
+import { getStartups } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
-// Mock startups data
-const mockStartups: Partial<User>[] = [
-  {
-    id: "startup1",
-    name: "TechNova Solutions",
-    bio: "A cutting-edge startup focused on AI-powered productivity tools for remote teams.",
-    skills: ["AI", "SaaS", "Remote Work"],
-    availability: { status: "available" }
-  },
-  {
-    id: "startup2",
-    name: "GreenLeaf Innovations",
-    bio: "Developing sustainable technologies to help businesses reduce their carbon footprint.",
-    skills: ["Sustainability", "CleanTech", "IoT"],
-    availability: { status: "available" }
-  },
-  {
-    id: "startup3",
-    name: "HealthPulse",
-    bio: "Creating digital solutions to make healthcare more accessible and affordable for everyone.",
-    skills: ["HealthTech", "Mobile Apps", "Telemedicine"],
-    availability: { status: "limited" }
-  },
-  {
-    id: "startup4",
-    name: "FinEdge",
-    bio: "Building next-generation financial tools to democratize investment opportunities.",
-    skills: ["FinTech", "Blockchain", "Data Analytics"],
-    availability: { status: "available" }
-  },
-  {
-    id: "startup5",
-    name: "EduSpark",
-    bio: "Transforming education through immersive learning experiences and personalized curricula.",
-    skills: ["EdTech", "VR/AR", "Adaptive Learning"],
-    availability: { status: "limited" }
-  },
-  {
-    id: "startup6",
-    name: "LogiTech Transport",
-    bio: "Optimizing logistics and supply chain operations with AI and predictive analytics.",
-    skills: ["Logistics", "Supply Chain", "AI"],
-    availability: { status: "available" }
-  }
-];
+interface StartupListProps {
+  featuredOnly?: boolean;
+}
 
-const StartupList = () => {
+const StartupList = ({ featuredOnly = false }: StartupListProps) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [startups, setStartups] = useState(mockStartups);
+  const [startups, setStartups] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+  
+  useEffect(() => {
+    const fetchStartups = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getStartups(featuredOnly);
+        setStartups(data);
+      } catch (error) {
+        console.error("Error fetching startups:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load startups. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchStartups();
+  }, [featuredOnly, toast]);
   
   // Filter startups based on search term
   const filteredStartups = startups.filter(
     (startup) =>
       startup.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      startup.bio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      startup.skills?.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
+      startup.companyDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      startup.sectors?.some(sector => sector.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+  
+  if (isLoading) {
+    return <div className="text-center py-8">Loading startups...</div>;
+  }
   
   return (
     <div className="space-y-6">
@@ -89,18 +76,18 @@ const StartupList = () => {
                   <div className="rounded-full w-12 h-12 bg-primary/10 flex items-center justify-center">
                     <Building2 className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle className="text-xl">{startup.name}</CardTitle>
+                  <CardTitle className="text-xl">{startup.companyName || startup.name}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="flex-grow">
                 <div className="space-y-4">
-                  <p className="text-muted-foreground">{startup.bio}</p>
+                  <p className="text-muted-foreground">{startup.companyDescription || startup.bio}</p>
                   
                   {/* Startup tags/industries */}
                   <div className="flex flex-wrap gap-2">
-                    {startup.skills?.map((skill) => (
-                      <Badge key={skill} variant="secondary">
-                        {skill}
+                    {startup.sectors?.map((sector) => (
+                      <Badge key={sector} variant="secondary">
+                        {sector}
                       </Badge>
                     ))}
                   </div>
@@ -108,10 +95,11 @@ const StartupList = () => {
                   {/* Availability status */}
                   <div className="flex items-center gap-2">
                     <Badge 
-                      variant={startup.availability?.status === "available" ? "default" : "outline"}
-                      className={startup.availability?.status === "available" ? "bg-green-500" : ""}
+                      variant={startup.hiringStatus === "hiring" ? "default" : "outline"}
+                      className={startup.hiringStatus === "hiring" ? "bg-green-500" : ""}
                     >
-                      {startup.availability?.status === "available" ? "Actively Hiring" : "Limited Openings"}
+                      {startup.hiringStatus === "hiring" ? "Actively Hiring" : 
+                       startup.hiringStatus === "future_hiring" ? "Hiring Soon" : "Not Hiring"}
                     </Badge>
                   </div>
                 </div>
@@ -136,9 +124,11 @@ const StartupList = () => {
         ) : (
           <div className="col-span-full text-center py-10">
             <p className="text-muted-foreground">No startups match your search criteria.</p>
-            <Button variant="link" onClick={() => setSearchTerm("")}>
-              Clear search
-            </Button>
+            {searchTerm && (
+              <Button variant="link" onClick={() => setSearchTerm("")}>
+                Clear search
+              </Button>
+            )}
           </div>
         )}
       </div>

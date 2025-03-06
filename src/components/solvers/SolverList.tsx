@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,70 +8,41 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { User, GraduationCap, Briefcase, Languages, Search, ExternalLink, Filter } from "lucide-react";
 import { User as UserType } from "@/lib/types";
 import { Link } from "react-router-dom";
+import { getSolvers } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
-// Mock solvers data
-const mockSolvers: Partial<UserType>[] = [
-  {
-    id: "solver1",
-    name: "Alex Johnson",
-    avatarUrl: "https://i.pravatar.cc/150?u=alex",
-    bio: "Computer Science student specializing in machine learning and AI applications.",
-    skills: ["Python", "TensorFlow", "Data Analysis"],
-    languages: ["English", "Spanish"],
-    availability: { status: "available", hours: 20 }
-  },
-  {
-    id: "solver2",
-    name: "Priya Patel",
-    avatarUrl: "https://i.pravatar.cc/150?u=priya",
-    bio: "UX/UI designer with a passion for creating intuitive and accessible interfaces.",
-    skills: ["UI/UX", "Figma", "Web Design"],
-    languages: ["English", "Hindi"],
-    availability: { status: "available", hours: 15 }
-  },
-  {
-    id: "solver3",
-    name: "Marcus Chen",
-    avatarUrl: "https://i.pravatar.cc/150?u=marcus",
-    bio: "Full stack developer with experience in building scalable web applications.",
-    skills: ["React", "Node.js", "MongoDB"],
-    languages: ["English", "Mandarin"],
-    availability: { status: "limited", hours: 10 }
-  },
-  {
-    id: "solver4",
-    name: "Sophia Rodriguez",
-    avatarUrl: "https://i.pravatar.cc/150?u=sophia",
-    bio: "Marketing student specializing in digital marketing strategies and analytics.",
-    skills: ["SEO", "Content Marketing", "Analytics"],
-    languages: ["English", "Spanish"],
-    availability: { status: "available", hours: 25 }
-  },
-  {
-    id: "solver5",
-    name: "James Wilson",
-    avatarUrl: "https://i.pravatar.cc/150?u=james",
-    bio: "Studying data science with a focus on business intelligence and visualization.",
-    skills: ["Python", "R", "Tableau"],
-    languages: ["English"],
-    availability: { status: "available", hours: 20 }
-  },
-  {
-    id: "solver6",
-    name: "Emma Taylor",
-    avatarUrl: "https://i.pravatar.cc/150?u=emma",
-    bio: "Mobile app developer with experience in both Android and iOS platforms.",
-    skills: ["Swift", "Kotlin", "Flutter"],
-    languages: ["English", "French"],
-    availability: { status: "limited", hours: 15 }
-  }
-];
+interface SolverListProps {
+  featuredOnly?: boolean;
+}
 
-const SolverList = () => {
+const SolverList = ({ featuredOnly = false }: SolverListProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState("");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [solvers, setSolvers] = useState(mockSolvers);
+  const [solvers, setSolvers] = useState<UserType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+  
+  useEffect(() => {
+    const fetchSolvers = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getSolvers(featuredOnly);
+        setSolvers(data);
+      } catch (error) {
+        console.error("Error fetching solvers:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load solvers. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchSolvers();
+  }, [featuredOnly, toast]);
   
   // Get all unique skills from solvers
   const allSkills = Array.from(
@@ -114,6 +85,10 @@ const SolverList = () => {
     setAvailabilityFilter("");
     setSelectedSkills([]);
   };
+  
+  if (isLoading) {
+    return <div className="text-center py-8">Loading solvers...</div>;
+  }
   
   return (
     <div className="space-y-6">

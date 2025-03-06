@@ -2,11 +2,6 @@
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import SolverList from "@/components/solvers/SolverList";
 
-// Define interface for SolverList props
-interface SolverListProps {
-  featuredOnly?: boolean;
-}
-
 const Solvers = () => {
   return (
     <div className="max-container pt-24 px-4 pb-16">
@@ -28,7 +23,7 @@ const Solvers = () => {
           </div>
         }
       >
-        <SolverList />
+        <SolverList featuredOnly={false} />
       </AuthGuard>
     </div>
   );

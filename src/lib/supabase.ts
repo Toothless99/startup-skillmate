@@ -2,17 +2,30 @@
 import { createClient } from '@supabase/supabase-js';
 import { User, Problem, Application } from './types';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Default to empty strings if env variables are not set
+// This allows the code to load without crashing
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
+// Create the Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Check if the configuration is valid - this happens after initialization
+// to prevent crashes on initial load
+const isSupabaseConfigured = () => {
+  return !!supabaseUrl && !!supabaseAnonKey;
+};
+
+// Helper function to check configuration before making API calls
+const requireSupabase = () => {
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables through the Supabase integration.');
+  }
+};
 
 // Auth functions
 export const signUp = async (email: string, password: string) => {
+  requireSupabase();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -23,6 +36,7 @@ export const signUp = async (email: string, password: string) => {
 };
 
 export const signIn = async (email: string, password: string) => {
+  requireSupabase();
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -33,6 +47,7 @@ export const signIn = async (email: string, password: string) => {
 };
 
 export const signInWithGoogle = async () => {
+  requireSupabase();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
   });
@@ -42,11 +57,13 @@ export const signInWithGoogle = async () => {
 };
 
 export const signOut = async () => {
+  requireSupabase();
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 };
 
 export const getCurrentUser = async () => {
+  requireSupabase();
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return null;
   
@@ -62,6 +79,7 @@ export const getCurrentUser = async () => {
 
 // Profile functions
 export const createProfile = async (profile: Partial<User>) => {
+  requireSupabase();
   const { data, error } = await supabase
     .from('profiles')
     .insert([profile])
@@ -72,6 +90,7 @@ export const createProfile = async (profile: Partial<User>) => {
 };
 
 export const updateProfile = async (id: string, updates: Partial<User>) => {
+  requireSupabase();
   const { data, error } = await supabase
     .from('profiles')
     .update(updates)
@@ -83,6 +102,7 @@ export const updateProfile = async (id: string, updates: Partial<User>) => {
 };
 
 export const getProfileById = async (id: string) => {
+  requireSupabase();
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
@@ -94,6 +114,7 @@ export const getProfileById = async (id: string) => {
 };
 
 export const getStartups = async (featuredOnly = false) => {
+  requireSupabase();
   let query = supabase
     .from('profiles')
     .select('*')
@@ -109,6 +130,7 @@ export const getStartups = async (featuredOnly = false) => {
 };
 
 export const getSolvers = async (featuredOnly = false) => {
+  requireSupabase();
   let query = supabase
     .from('profiles')
     .select('*')
@@ -125,6 +147,7 @@ export const getSolvers = async (featuredOnly = false) => {
 
 // Problem functions
 export const createProblem = async (problem: Partial<Problem>) => {
+  requireSupabase();
   const { data, error } = await supabase
     .from('problems')
     .insert([problem])
@@ -135,6 +158,7 @@ export const createProblem = async (problem: Partial<Problem>) => {
 };
 
 export const getProblems = async (startupId?: string, featured?: boolean) => {
+  requireSupabase();
   let query = supabase
     .from('problems')
     .select('*, startup:profiles(*)');
@@ -155,6 +179,7 @@ export const getProblems = async (startupId?: string, featured?: boolean) => {
 
 // Application functions
 export const createApplication = async (application: Partial<Application>) => {
+  requireSupabase();
   const { data, error } = await supabase
     .from('applications')
     .insert([application])
@@ -165,6 +190,7 @@ export const createApplication = async (application: Partial<Application>) => {
 };
 
 export const getApplicationsForStartup = async (startupId: string) => {
+  requireSupabase();
   const { data, error } = await supabase
     .from('applications')
     .select('*, problem:problems(*), user:profiles(*)')
@@ -175,6 +201,7 @@ export const getApplicationsForStartup = async (startupId: string) => {
 };
 
 export const getApplicationsForUser = async (userId: string) => {
+  requireSupabase();
   const { data, error } = await supabase
     .from('applications')
     .select('*, problem:problems(*), startup:problems(startup(*))')

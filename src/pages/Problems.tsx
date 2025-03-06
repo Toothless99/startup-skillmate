@@ -8,12 +8,6 @@ import { useAuth } from "@/context/AuthContext";
 import { AuthButton, AuthGuard } from "@/components/auth/AuthGuard";
 import { Problem } from "@/lib/types";
 
-// Define interface for ProblemList props
-interface ProblemListProps {
-  initialProblems?: Problem[];
-  featuredOnly?: boolean;
-}
-
 const Problems = () => {
   const [isNewProblemDialogOpen, setIsNewProblemDialogOpen] = useState(false);
   const [problems, setProblems] = useState<Problem[]>([]);
@@ -50,7 +44,7 @@ const Problems = () => {
             <p className="text-muted-foreground mb-6">
               Sign in to see all available problems from startups
             </p>
-            <ProblemList featuredOnly={true} />
+            <ProblemList initialProblems={[]} featuredOnly={true} />
           </div>
         }
       >

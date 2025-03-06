@@ -1,3 +1,5 @@
+
+// First few lines of the file
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Problem } from "@/lib/types";
@@ -117,6 +119,7 @@ interface ProblemListProps {
   limitForGuests?: boolean;
   onViewDetails?: (problemId: string) => void;
   onApply?: (problemId: string) => void;
+  featuredOnly?: boolean;
 }
 
 const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onViewDetails, onApply }: ProblemListProps) => {

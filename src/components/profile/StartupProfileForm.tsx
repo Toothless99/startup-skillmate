@@ -127,6 +127,10 @@ const StartupProfileForm = ({ user, onSubmit }: StartupProfileFormProps) => {
     }
   };
 
+  const handleMultiSelectChange = (name: string, values: string[]) => {
+    setFormData(prev => ({ ...prev, [name]: values }));
+  };
+
   const stageOptions = [
     { value: "idea", label: "Idea Stage" },
     { value: "mvp", label: "MVP" },
@@ -275,7 +279,7 @@ const StartupProfileForm = ({ user, onSubmit }: StartupProfileFormProps) => {
               <MultiSelect
                 options={industrySectorOptions}
                 selected={formData.industrySectors}
-                onChange={(selected) => handleSelectChange("industrySectors", selected)}
+                onChange={(selected) => handleMultiSelectChange("industrySectors", selected)}
                 placeholder="Select industry sectors"
               />
             </div>

@@ -2,23 +2,24 @@
 import { createClient } from '@supabase/supabase-js';
 import { User, Problem, Application } from './types';
 
-// Default to empty strings if env variables are not set
-// This allows the code to load without crashing
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Get environment variables with proper type checking
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Check if environment variables are set
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Supabase environment variables are missing. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables through the Supabase integration.');
+}
 
 // Create the Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// Check if the configuration is valid - this happens after initialization
-// to prevent crashes on initial load
-const isSupabaseConfigured = () => {
-  return !!supabaseUrl && !!supabaseAnonKey;
-};
+export const supabase = createClient(
+  supabaseUrl || '', 
+  supabaseAnonKey || ''
+);
 
 // Helper function to check configuration before making API calls
 const requireSupabase = () => {
-  if (!isSupabaseConfigured()) {
+  if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Supabase is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables through the Supabase integration.');
   }
 };

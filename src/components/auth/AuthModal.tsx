@@ -1,21 +1,41 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultTab?: "login" | "signup";
   onSuccess?: () => void;
+  redirectTo?: string;
 }
 
-const AuthModal = ({ isOpen, onClose, defaultTab = "login", onSuccess }: AuthModalProps) => {
+const AuthModal = ({ isOpen, onClose, defaultTab = "login", onSuccess, redirectTo }: AuthModalProps) => {
   const [activeTab, setActiveTab] = useState<"login" | "signup">(defaultTab);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // If user becomes authenticated and there's a redirect path, navigate there
+    if (isAuthenticated && redirectTo) {
+      onClose();
+      navigate(redirectTo);
+    }
+  }, [isAuthenticated, redirectTo, navigate, onClose]);
 
   const handleSuccess = () => {
     onSuccess?.();
+    
+    // If there's a redirect path, navigate there on success
+    if (redirectTo && isAuthenticated) {
+      navigate(redirectTo);
+    }
+    
     onClose();
   };
 

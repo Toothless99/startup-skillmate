@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,13 +6,24 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/context/AuthContext";
 import StartupSignupForm from "./StartupSignupForm";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
 
 interface SignupFormProps {
   onSuccess?: () => void;
 }
 
+// Create a schema for form validation
+const signupSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  role: z.enum(["student", "startup"])
+});
+
 const SignupForm = ({ onSuccess }: SignupFormProps) => {
   const { signup } = useAuth();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -19,35 +31,50 @@ const SignupForm = ({ onSuccess }: SignupFormProps) => {
     name: "",
     role: "student" as "student" | "startup"
   });
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [step, setStep] = useState(1);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    setError("");
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleRoleChange = (value: "student" | "startup") => {
     setFormData(prev => ({ ...prev, role: value }));
   };
 
+  const validateForm = () => {
+    try {
+      signupSchema.parse(formData);
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach(err => {
+          if (err.path) {
+            newErrors[err.path[0].toString()] = err.message;
+          }
+        });
+        setErrors(newErrors);
+      }
+      return false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.email || !formData.password || !formData.name) {
-      setError("Please fill in all fields");
-      return;
-    }
-    
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (!validateForm()) {
       return;
     }
     
     try {
       setIsLoading(true);
-      setError("");
       
       if (formData.role === "startup") {
         // For startups, we'll move to the next step
@@ -58,9 +85,20 @@ const SignupForm = ({ onSuccess }: SignupFormProps) => {
       
       // For students, complete signup immediately
       await signup(formData.email, formData.password, formData.name, formData.role);
+      
+      toast({
+        title: "Account created!",
+        description: "Your account has been created successfully.",
+      });
+      
       onSuccess?.();
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Signup failed. Please try again.");
+      console.error("Signup error:", error);
+      toast({
+        title: "Signup failed",
+        description: error instanceof Error ? error.message : "Signup failed. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +118,7 @@ const SignupForm = ({ onSuccess }: SignupFormProps) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 py-2">
       <div className="space-y-2">
-        <Label htmlFor="name">Full Name</Label>
+        <Label htmlFor="name">Full Name <span className="text-red-500">*</span></Label>
         <Input
           id="name"
           name="name"
@@ -88,11 +126,15 @@ const SignupForm = ({ onSuccess }: SignupFormProps) => {
           value={formData.name}
           onChange={handleChange}
           required
+          className={errors.name ? "border-destructive" : ""}
         />
+        {errors.name && (
+          <p className="text-sm text-destructive">{errors.name}</p>
+        )}
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
         <Input
           id="email"
           name="email"
@@ -101,11 +143,15 @@ const SignupForm = ({ onSuccess }: SignupFormProps) => {
           value={formData.email}
           onChange={handleChange}
           required
+          className={errors.email ? "border-destructive" : ""}
         />
+        {errors.email && (
+          <p className="text-sm text-destructive">{errors.email}</p>
+        )}
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
         <Input
           id="password"
           name="password"
@@ -114,11 +160,18 @@ const SignupForm = ({ onSuccess }: SignupFormProps) => {
           value={formData.password}
           onChange={handleChange}
           required
+          className={errors.password ? "border-destructive" : ""}
         />
+        {errors.password && (
+          <p className="text-sm text-destructive">{errors.password}</p>
+        )}
+        <p className="text-xs text-muted-foreground">
+          Password must be at least 6 characters.
+        </p>
       </div>
       
       <div className="space-y-2">
-        <Label>I am a:</Label>
+        <Label>I am a: <span className="text-red-500">*</span></Label>
         <RadioGroup 
           value={formData.role} 
           onValueChange={handleRoleChange}
@@ -134,10 +187,6 @@ const SignupForm = ({ onSuccess }: SignupFormProps) => {
           </div>
         </RadioGroup>
       </div>
-      
-      {error && (
-        <div className="text-sm text-destructive">{error}</div>
-      )}
       
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? "Creating account..." : formData.role === "startup" ? "Next" : "Create Account"}

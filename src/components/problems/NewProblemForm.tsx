@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +27,6 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    startupName: user?.companyName || "",
     experienceLevel: "beginner" as "beginner" | "intermediate" | "advanced",
     compensation: "",
     additionalInfo: "",
@@ -62,10 +62,19 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title || !formData.description || !formData.startupName || requiredSkills.length === 0) {
+    if (!formData.title || !formData.description || requiredSkills.length === 0) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields and add at least one required skill.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!user || user.role !== "startup") {
+      toast({
+        title: "Permission denied",
+        description: "Only startups can post problems.",
         variant: "destructive",
       });
       return;
@@ -80,19 +89,11 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
       
       // Create a new problem object to add to the list
       const newProblem: Problem = {
-        id: `temp-${Date.now()}`, // In a real app, this would come from the backend
+        id: `prob-${Date.now()}`, // In a real app, this would come from the backend
         title: formData.title,
         description: formData.description,
-        startupId: user?.id || "unknown",
-        startup: {
-          id: user?.id || "unknown",
-          name: formData.startupName,
-          companyName: formData.startupName,
-          email: user?.email || "",
-          role: "startup",
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
+        startupId: user.id, // Use the startup ID instead of name
+        startup: user, // Reference the full user object
         requiredSkills,
         experienceLevel: formData.experienceLevel,
         compensation: formData.compensation || undefined,
@@ -133,18 +134,6 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
           value={formData.title}
           onChange={handleChange}
           placeholder="E.g., Develop a Mobile App UI/UX"
-          required
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="startupName">Startup Name <span className="text-red-500">*</span></Label>
-        <Input
-          id="startupName"
-          name="startupName"
-          value={formData.startupName}
-          onChange={handleChange}
-          placeholder="Your company name"
           required
         />
       </div>
@@ -273,4 +262,4 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
   );
 };
 
-export default NewProblemForm; 
+export default NewProblemForm;

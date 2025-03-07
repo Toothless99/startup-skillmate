@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Problem } from "@/lib/types";
@@ -252,6 +251,7 @@ const ProblemList = ({
             <ProblemDetailsDialog 
               problem={selectedProblem}
               onClose={() => setIsDetailsDialogOpen(false)}
+              isOpen={isDetailsDialogOpen}
             />
           )}
         </DialogContent>

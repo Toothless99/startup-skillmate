@@ -87,14 +87,14 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
       const problemData: Omit<Problem, 'id' | 'createdAt' | 'updatedAt'> = {
         title: formData.title,
         description: formData.description,
-        startupId: user.id,
-        requiredSkills,
-        experienceLevel: formData.experienceLevel,
+        startup_id: user.id,
+        required_skills: requiredSkills,
+        experience_level: formData.experienceLevel,
         compensation: formData.compensation || undefined,
         deadline: formData.deadline || undefined,
         status: "open",
         featured: false,
-        additionalInfo: formData.additionalInfo || undefined
+        additional_info: formData.additionalInfo || undefined
       };
       
       // Save the problem to the database
@@ -264,4 +264,4 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
   );
 };
 
-export default NewProblemForm; 
+export default NewProblemForm;

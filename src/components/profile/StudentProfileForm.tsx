@@ -101,12 +101,12 @@ const StudentProfileForm = ({ user, onSubmit }: StudentProfileFormProps) => {
   const [formData, setFormData] = useState({
     name: user.name || "",
     bio: user.bio || "",
-    websiteUrl: user.websiteUrl || "",
-    linkedinUrl: user.linkedinUrl || "",
+    websiteUrl: user.website_url || "",
+    linkedinUrl: user.linkedin_url || "",
     university: user.university || "",
     major: user.major || "",
-    graduationYear: user.graduationYear || "",
-    experienceLevel: user.experienceLevel || "beginner" as "beginner" | "intermediate" | "advanced",
+    graduationYear: user.graduation_year || "",
+    experienceLevel: user.experience_level || "beginner" as "beginner" | "intermediate" | "advanced",
     availability: {
       status: user.availability?.status || "available" as "available" | "limited" | "unavailable",
       hours: user.availability?.hours || 10
@@ -144,9 +144,13 @@ const StudentProfileForm = ({ user, onSubmit }: StudentProfileFormProps) => {
       
       await onSubmit({
         ...formData,
+        website_url: formData.websiteUrl,
+        linkedin_url: formData.linkedinUrl,
+        graduation_year: formData.graduationYear,
+        experience_level: formData.experienceLevel,
         skills,
         languages,
-        areasOfInterest
+        areas_of_interest: areasOfInterest
       });
     } catch (error) {
       console.error("Failed to update profile:", error);

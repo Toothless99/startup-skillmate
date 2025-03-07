@@ -61,11 +61,11 @@ const AuthModal = ({
           </TabsList>
           
           <TabsContent value="login" className="mt-4">
-            <LoginForm onSuccess={handleLoginSuccess} redirectTo={redirectTo} />
+            <LoginForm onSuccess={handleLoginSuccess} />
           </TabsContent>
           
           <TabsContent value="signup" className="mt-4">
-            <SignupForm onSuccess={handleSignupSuccess} redirectTo={redirectTo} />
+            <SignupForm onSuccess={handleSignupSuccess} />
           </TabsContent>
         </Tabs>
       </DialogContent>

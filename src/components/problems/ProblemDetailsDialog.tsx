@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,10 +30,10 @@ const ProblemDetailsDialog = ({ isOpen, onClose, problem, onApply }: ProblemDeta
             <div className="flex items-center space-x-2">
               <Building2 className="h-4 w-4 text-muted-foreground" />
               <Link 
-                to={`/startups/${problem.startupId}`}
+                to={`/startups/${problem.startup_id}`}
                 className="text-primary hover:underline flex items-center"
               >
-                {problem.startup?.companyName || problem.startup?.name}
+                {problem.startup?.company_name || problem.startup?.name}
                 <ExternalLink className="ml-1 h-3 w-3" />
               </Link>
             </div>
@@ -62,12 +63,12 @@ const ProblemDetailsDialog = ({ isOpen, onClose, problem, onApply }: ProblemDeta
           </div>
           
           {/* Additional Info */}
-          {problem.additionalInfo && (
+          {problem.additional_info && (
             <div className="space-y-2">
               <h3 className="font-medium flex items-center">
                 <Info className="mr-1 h-4 w-4" /> Additional Information
               </h3>
-              <p className="text-sm whitespace-pre-line">{problem.additionalInfo}</p>
+              <p className="text-sm whitespace-pre-line">{problem.additional_info}</p>
             </div>
           )}
           
@@ -77,7 +78,7 @@ const ProblemDetailsDialog = ({ isOpen, onClose, problem, onApply }: ProblemDeta
               <Tag className="mr-1 h-4 w-4" /> Required Skills
             </h3>
             <div className="flex flex-wrap gap-2">
-              {problem.requiredSkills.map((skill) => (
+              {problem.required_skills.map((skill) => (
                 <Badge key={skill} variant="outline">
                   {skill}
                 </Badge>
@@ -91,7 +92,7 @@ const ProblemDetailsDialog = ({ isOpen, onClose, problem, onApply }: ProblemDeta
               <h3 className="font-medium flex items-center">
                 <Briefcase className="mr-1 h-4 w-4" /> Experience Level
               </h3>
-              <p className="capitalize">{problem.experienceLevel}</p>
+              <p className="capitalize">{problem.experience_level}</p>
             </div>
             
             {problem.compensation && (
@@ -122,4 +123,4 @@ const ProblemDetailsDialog = ({ isOpen, onClose, problem, onApply }: ProblemDeta
   );
 };
 
-export default ProblemDetailsDialog; 
+export default ProblemDetailsDialog;

@@ -54,18 +54,18 @@ const StartupProfileForm = ({ user, onSubmit }: StartupProfileFormProps) => {
   const [sectorInput, setSectorInput] = useState("");
   const [sectors, setSectors] = useState<string[]>(user.sectors || []);
   const [cofounderInput, setCofounderInput] = useState("");
-  const [cofounderNames, setCofounderNames] = useState<string[]>(user.founderNames || []);
+  const [cofounderNames, setCofounderNames] = useState<string[]>(user.founder_names || []);
   
   const [formData, setFormData] = useState({
     name: user.name || "",
-    companyName: user.companyName || "",
-    companyDescription: user.companyDescription || "",
-    websiteUrl: user.websiteUrl || "",
-    linkedinUrl: user.linkedinUrl || "",
+    companyName: user.company_name || "",
+    companyDescription: user.company_description || "",
+    websiteUrl: user.website_url || "",
+    linkedinUrl: user.linkedin_url || "",
     location: user.location || "",
     stage: user.stage || "idea",
-    hiringStatus: user.hiringStatus || "not_hiring" as "hiring" | "not_hiring" | "future_hiring",
-    industrySectors: user.industrySectors || []
+    hiringStatus: user.hiring_status || "not_hiring" as "hiring" | "not_hiring" | "future_hiring",
+    industrySectors: user.industry_sectors || []
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -111,16 +111,16 @@ const StartupProfileForm = ({ user, onSubmit }: StartupProfileFormProps) => {
       
       await onSubmit({
         name: formData.name,
-        companyName: formData.companyName,
-        companyDescription: formData.companyDescription,
-        websiteUrl: formData.websiteUrl,
-        linkedinUrl: formData.linkedinUrl,
+        company_name: formData.companyName,
+        company_description: formData.companyDescription,
+        website_url: formData.websiteUrl,
+        linkedin_url: formData.linkedinUrl,
         location: formData.location,
-        founderNames: cofounderNames,
+        founder_names: cofounderNames,
         sectors,
         stage: formData.stage,
-        hiringStatus: formData.hiringStatus,
-        industrySectors: formData.industrySectors
+        hiring_status: formData.hiringStatus,
+        industry_sectors: formData.industrySectors
       });
     } finally {
       setIsLoading(false);
@@ -174,7 +174,9 @@ const StartupProfileForm = ({ user, onSubmit }: StartupProfileFormProps) => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="companyDescription">Company Description <span className="text-red-500">*</span></Label>
+            <Label htmlFor="companyDescription" className="flex items-center">
+              <Building2 className="mr-1 h-4 w-4" /> Company Description <span className="text-red-500">*</span>
+            </Label>
             <Textarea
               id="companyDescription"
               name="companyDescription"

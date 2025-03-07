@@ -1,3 +1,4 @@
+
 import { User } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +30,7 @@ const SolverCard = ({ solver, onViewProfile }: SolverCardProps) => {
             <div>
               <h3 className="font-semibold text-lg">{solver.name}</h3>
               <p className="text-sm text-muted-foreground">
-                {solver.university} {solver.graduationYear ? `'${solver.graduationYear.slice(-2)}` : ""}
+                {solver.university} {solver.graduation_year ? `'${solver.graduation_year.slice(-2)}` : ""}
               </p>
             </div>
           </div>
@@ -47,7 +48,7 @@ const SolverCard = ({ solver, onViewProfile }: SolverCardProps) => {
             </div>
           )}
           <div className="text-sm">
-            <span className="font-medium">Experience:</span> {solver.experienceLevel ? solver.experienceLevel.charAt(0).toUpperCase() + solver.experienceLevel.slice(1) : "Not specified"}
+            <span className="font-medium">Experience:</span> {solver.experience_level ? solver.experience_level.charAt(0).toUpperCase() + solver.experience_level.slice(1) : "Not specified"}
           </div>
           <div>
             <span className="text-sm font-medium">Skills:</span>
@@ -79,4 +80,4 @@ const SolverCard = ({ solver, onViewProfile }: SolverCardProps) => {
   );
 };
 
-export default SolverCard; 
+export default SolverCard;

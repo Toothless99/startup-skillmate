@@ -49,7 +49,7 @@ const ProfileCard = ({ user }: ProfileCardProps) => {
                 </>
               ) : (
                 <>
-                  <Badge variant="outline" className="capitalize">{user.experienceLevel || "Beginner"}</Badge>
+                  <Badge variant="outline" className="capitalize">{user.experience_level || "Beginner"}</Badge>
                   {user.availability?.status === "available" && (
                     <Badge className="bg-green-500">Available</Badge>
                   )}
@@ -166,7 +166,7 @@ const ProfileCard = ({ user }: ProfileCardProps) => {
           {/* Student specific */}
           {!isStartup && (
             <>
-              {(user.university || user.major || user.graduationYear) && (
+              {(user.university || user.major || user.graduation_year) && (
                 <div className="space-y-2">
                   <h3 className="font-medium flex items-center">
                     <GraduationCap className="mr-1 h-4 w-4" /> Education
@@ -178,7 +178,7 @@ const ProfileCard = ({ user }: ProfileCardProps) => {
                     {user.major && (
                       <p className="text-sm text-muted-foreground">
                         {user.major}
-                        {user.graduationYear && ` • Class of ${user.graduationYear}`}
+                        {user.graduation_year && ` • Class of ${user.graduation_year}`}
                       </p>
                     )}
                   </div>
@@ -200,11 +200,11 @@ const ProfileCard = ({ user }: ProfileCardProps) => {
                 </div>
               )}
               
-              {user.areasOfInterest && user.areasOfInterest.length > 0 && (
+              {user.areas_of_interest && user.areas_of_interest.length > 0 && (
                 <div className="space-y-2">
                   <h3 className="font-medium">Areas of Interest</h3>
                   <div className="flex flex-wrap gap-2">
-                    {user.areasOfInterest.map((interest) => (
+                    {user.areas_of_interest.map((interest) => (
                       <Badge key={interest} variant="outline">
                         {interest}
                       </Badge>

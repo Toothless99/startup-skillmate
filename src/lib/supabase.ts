@@ -5,8 +5,8 @@ import { createClient } from '@supabase/supabase-js';
 import { User, Problem, Application } from './types';
 
 // Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ebyaurtxnxogxfvjaqxp.supabase.co';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVieWF1cnR4bnhvZ3hmdmphcXhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMjAyNjYsImV4cCI6MjA1Njc5NjI2Nn0.s05X6pAPjaY0MAdUubTXQWEONdCU6bDygjcSv586MLg';
 
 // Check if Supabase is configured properly
 const isSupabaseConfigured = supabaseUrl && supabaseKey;

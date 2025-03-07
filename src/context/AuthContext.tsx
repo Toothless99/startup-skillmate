@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase, requireSupabase, createUser, updateUser, getUserById } from "@/lib/supabase";
 import { User } from "@/lib/types";
@@ -206,7 +205,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       
       // Update timestamp
-      userData.updatedAt = new Date();
+      userData.updated_at = new Date();
       
       const updatedUser = await updateUser(user.id, userData);
       

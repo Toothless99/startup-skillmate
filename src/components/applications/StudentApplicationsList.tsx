@@ -48,7 +48,8 @@ const StudentApplicationsList = ({ status }: StudentApplicationsListProps) => {
     fetchApplications();
   }, [user, toast, status]);
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date?: Date) => {
+    if (!date) return 'Unknown date';
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -95,7 +96,7 @@ const StudentApplicationsList = ({ status }: StudentApplicationsListProps) => {
               <div>
                 <h3 className="font-semibold text-lg">{application.problem?.title}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Applied on {application.createdAt ? formatDate(application.createdAt) : 'Unknown date'}
+                  Applied on {application.created_at ? formatDate(application.created_at) : 'Unknown date'}
                 </p>
               </div>
               {getStatusBadge(application.status)}

@@ -104,13 +104,13 @@ const ApplicationsList = ({ status }: ApplicationsListProps) => {
             <div className="flex justify-between items-start">
               <div className="flex items-center space-x-4">
                 <Avatar>
-                  <AvatarImage src={application.user?.avatarUrl} alt={application.user?.name} />
+                  <AvatarImage src={application.user?.avatar_url} alt={application.user?.name} />
                   <AvatarFallback>{getInitials(application.user?.name || "")}</AvatarFallback>
                 </Avatar>
                 <div>
                   <h3 className="font-semibold">{application.user?.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Applied on {formatDate(application.createdAt)}
+                    Applied on {formatDate(application.created_at)}
                   </p>
                 </div>
               </div>

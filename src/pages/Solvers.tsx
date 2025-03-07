@@ -1,12 +1,38 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import SolverList from "@/components/solvers/SolverList";
 import AuthGuard from "@/components/auth/AuthGuard";
 import { User } from "@/lib/types";
+import { getStudents } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 const Solvers = () => {
   const navigate = useNavigate();
-  const [featuredSolvers] = useState<User[]>([]);
+  const { toast } = useToast();
+  const [solvers, setSolvers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSolvers = async () => {
+      try {
+        setIsLoading(true);
+        const students = await getStudents();
+        setSolvers(students);
+      } catch (error) {
+        console.error("Error fetching solvers:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load solvers. Please try again later.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSolvers();
+  }, [toast]);
 
   const handleViewProfile = (solverId: string) => {
     navigate(`/solvers/${solverId}`);
@@ -24,7 +50,8 @@ const Solvers = () => {
           </div>
           
           <SolverList 
-            initialSolvers={featuredSolvers}
+            initialSolvers={solvers}
+            isLoading={isLoading}
             onViewProfile={handleViewProfile}
           />
         </div>

@@ -7,12 +7,28 @@ import { User, Problem, Application } from './types';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
+// Check if Supabase is configured properly
+const isSupabaseConfigured = supabaseUrl && supabaseKey;
+if (!isSupabaseConfigured) {
+  console.error('Missing Supabase environment variables. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
+}
+
 export const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Helper function to check if Supabase is configured before making API calls
+export const requireSupabase = () => {
+  if (!isSupabaseConfigured) {
+    throw new Error('Missing Supabase environment variables. Please set up the Supabase integration.');
+  }
+  return supabase;
+};
 
 // User functions
 export const createUser = async (userData: Partial<User>): Promise<User | null> => {
   try {
-    const { data, error } = await supabase
+    const db = requireSupabase();
+    
+    const { data, error } = await db
       .from('users')
       .insert([userData])
       .select()
@@ -28,7 +44,9 @@ export const createUser = async (userData: Partial<User>): Promise<User | null> 
 
 export const getUserById = async (userId: string): Promise<User | null> => {
   try {
-    const { data, error } = await supabase
+    const db = requireSupabase();
+    
+    const { data, error } = await db
       .from('users')
       .select('*')
       .eq('id', userId)
@@ -44,7 +62,9 @@ export const getUserById = async (userId: string): Promise<User | null> => {
 
 export const updateUser = async (userId: string, userData: Partial<User>): Promise<User | null> => {
   try {
-    const { data, error } = await supabase
+    const db = requireSupabase();
+    
+    const { data, error } = await db
       .from('users')
       .update(userData)
       .eq('id', userId)
@@ -62,7 +82,9 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
 // Get all students (solvers)
 export const getStudents = async (): Promise<User[]> => {
   try {
-    const { data, error } = await supabase
+    const db = requireSupabase();
+    
+    const { data, error } = await db
       .from('users')
       .select('*')
       .eq('role', 'student');
@@ -78,7 +100,9 @@ export const getStudents = async (): Promise<User[]> => {
 // Get all startups
 export const getStartups = async (): Promise<User[]> => {
   try {
-    const { data, error } = await supabase
+    const db = requireSupabase();
+    
+    const { data, error } = await db
       .from('users')
       .select('*')
       .eq('role', 'startup');
@@ -94,7 +118,9 @@ export const getStartups = async (): Promise<User[]> => {
 // Problem functions
 export const createProblem = async (problemData: Partial<Problem>): Promise<Problem | null> => {
   try {
-    const { data, error } = await supabase
+    const db = requireSupabase();
+    
+    const { data, error } = await db
       .from('problems')
       .insert([problemData])
       .select()
@@ -105,6 +131,43 @@ export const createProblem = async (problemData: Partial<Problem>): Promise<Prob
   } catch (error) {
     console.error('Error creating problem:', error);
     return null;
+  }
+};
+
+// Get all problems
+export const getProblems = async (): Promise<Problem[]> => {
+  try {
+    const db = requireSupabase();
+    
+    const { data, error } = await db
+      .from('problems')
+      .select('*, startup:users(id, name, companyName, avatarUrl)')
+      .order('createdAt', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching problems:', error);
+    return [];
+  }
+};
+
+// Get problems by startup ID
+export const getProblemsByStartupId = async (startupId: string): Promise<Problem[]> => {
+  try {
+    const db = requireSupabase();
+    
+    const { data, error } = await db
+      .from('problems')
+      .select('*')
+      .eq('startupId', startupId)
+      .order('createdAt', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching problems by startup ID:', error);
+    return [];
   }
 };
 

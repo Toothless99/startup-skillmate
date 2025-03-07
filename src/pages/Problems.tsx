@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import ProblemList from "@/components/problems/ProblemList";
 import { Problem } from "@/lib/types";
@@ -8,6 +9,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import NewProblemForm from "@/components/problems/NewProblemForm";
 import { useAuth } from "@/context/AuthContext";
 import AuthModal from "@/components/auth/AuthModal";
+import { getProblems } from "@/lib/supabase";
 
 const Problems = () => {
   const { toast } = useToast();
@@ -18,10 +20,25 @@ const Problems = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   useEffect(() => {
-    // In a real app, this would fetch problems from your API
-    // For now, we'll use the mock data in ProblemList
-    setIsLoading(false);
-  }, []);
+    const fetchProblems = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedProblems = await getProblems();
+        setProblems(fetchedProblems);
+      } catch (error) {
+        console.error("Error fetching problems:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load problems. Please try again later.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProblems();
+  }, [toast]);
 
   const handlePostProblemClick = () => {
     if (isAuthenticated) {

@@ -159,16 +159,14 @@ const Profile = () => {
   
   const handleProfileUpdate = async (userData: Partial<typeof user>) => {
     try {
-      await updateUserProfile(userData);
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been successfully updated.",
-      });
-      setActiveTab("overview");
-    } catch (error) {
+      const success = await updateUserProfile(userData);
+      if (success) {
+        setActiveTab("overview");
+      }
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to update profile. Please try again.",
+        description: error.message || "Failed to update profile. Please try again.",
         variant: "destructive",
       });
     }

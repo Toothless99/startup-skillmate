@@ -23,7 +23,7 @@ const ProfileView = () => {
       
       try {
         setIsLoading(true);
-        const userData = await getProfileById(id);
+        const userData = await getUserById(id);
         setProfile(userData);
       } catch (error) {
         console.error("Error fetching profile:", error);

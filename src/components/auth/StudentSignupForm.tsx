@@ -99,6 +99,8 @@ const StudentSignupForm = ({ email, password, name, onBack, onSuccess }: Student
         githubUrl: githubUrl || undefined,
         linkedinUrl: linkedinUrl || undefined,
         portfolioUrl: portfolioUrl || undefined,
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
       
       // Call the signup method from AuthContext
@@ -233,4 +235,4 @@ const StudentSignupForm = ({ email, password, name, onBack, onSuccess }: Student
   );
 };
 
-export default StudentSignupForm; 
+export default StudentSignupForm;

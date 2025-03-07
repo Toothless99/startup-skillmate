@@ -1,8 +1,10 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -10,6 +12,7 @@ interface LoginFormProps {
 
 const LoginForm = ({ onSuccess }: LoginFormProps) => {
   const { login } = useAuth();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -29,14 +32,27 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
     setIsLoading(true);
     
     try {
-      await login(formData.email, formData.password);
-      if (onSuccess) onSuccess();
+      const result = await login(formData.email, formData.password);
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Logged in successfully",
+        });
+        if (onSuccess) onSuccess();
+      } else {
+        setError(result.error || "Failed to login");
+      }
     } catch (error: any) {
       // Check if this is an email confirmation error and handle demo accounts
-      if (error.message.includes("Email not confirmed") && 
+      if (error.message?.includes("Email not confirmed") && 
           (formData.email === "student@example.com" || formData.email === "startup@example.com")) {
         // For demo accounts, we'll consider the login successful
         console.log("Demo account - bypassing email confirmation");
+        toast({
+          title: "Success",
+          description: "Logged in with demo account",
+        });
         if (onSuccess) onSuccess();
       } else {
         // Handle normal errors

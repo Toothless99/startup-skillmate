@@ -1,6 +1,8 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase, createUser, updateUser, getUserById } from "@/lib/supabase";
+import { supabase, requireSupabase, createUser, updateUser, getUserById } from "@/lib/supabase";
 import { User } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthContextType {
   user: User | null;
@@ -9,7 +11,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, userData: Partial<User>) => Promise<{ success: boolean; error?: string; userId?: string }>;
   logout: () => Promise<void>;
-  updateUserProfile: (userId: string, userData: Partial<User>) => Promise<boolean>;
+  updateUserProfile: (userData: Partial<User>) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,9 +20,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
+  // Check for existing session on load
   useEffect(() => {
-    // Check for existing session on load
     const checkSession = async () => {
       try {
         const { data } = await supabase.auth.getSession();
@@ -62,98 +65,113 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setIsLoading(true);
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      // Demo account handling - Check if this is a demo account
+      // Make sure Supabase is configured
+      requireSupabase();
+      
+      // Demo account handling
       const isDemoAccount = email === "student@example.com" || email === "startup@example.com";
       
+      if (isDemoAccount) {
+        // For demo accounts, simulate a successful login
+        const role = email.startsWith("student") ? "student" : "startup";
+        
+        // Create a mock user object
+        const mockUser = {
+          id: `demo-${role}-${Date.now()}`,
+          email: email,
+          role: role as "student" | "startup",
+          name: role === "student" ? "Demo Student" : "Demo User",
+          companyName: role === "startup" ? "Demo Company" : undefined,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        setUser(mockUser as User);
+        setIsAuthenticated(true);
+        
+        return { success: true };
+      }
+      
+      // Regular login flow
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        // If it's a demo account and the error is about email confirmation
-        if (isDemoAccount && error.message.includes("Email not confirmed")) {
-          // For demo accounts, we can simulate a successful login
-          console.log("Demo account detected - bypassing email confirmation");
-          
-          // Get user profile based on email
-          const role = email.startsWith("student") ? "student" : "startup";
-          
-          // Create a mock user object
-          const mockUser = {
-            id: `demo-${role}-id`,
-            email: email,
-            role: role,
-            name: role === "student" ? "Demo Student" : "Demo Startup",
-            // Add other necessary user properties
-            ...(role === "startup" ? { companyName: "Demo Company" } : {}),
-          };
-          
-          setUser(mockUser);
-          setIsAuthenticated(true);
-          setIsLoading(false);
-          return { user: mockUser };
-        }
-        
-        // For non-demo accounts or other errors, throw the error
         throw error;
       }
 
       if (data.user) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-
-        setUser({
-          id: data.user.id,
-          email: data.user.email!,
-          ...profileData,
-        });
-        setIsAuthenticated(true);
+        const userData = await getUserById(data.user.id);
+        
+        if (userData) {
+          setUser(userData);
+          setIsAuthenticated(true);
+          return { success: true };
+        } else {
+          return { 
+            success: false, 
+            error: "User profile not found. Please contact support." 
+          };
+        }
       }
       
-      return data;
-    } catch (error) {
+      return { success: false, error: "No user data returned from authentication." };
+    } catch (error: any) {
       console.error("Login error:", error);
-      throw error;
-    } finally {
-      setIsLoading(false);
+      return { 
+        success: false, 
+        error: error.message || "Failed to login. Please try again." 
+      };
     }
   };
 
-  const signup = async (email: string, password: string, userData: Partial<User>) => {
+  const signup = async (email: string, password: string, userData: Partial<User>): Promise<{ success: boolean; error?: string; userId?: string }> => {
     try {
+      // Make sure Supabase is configured
+      requireSupabase();
+      
       // Create auth user in Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
 
-      if (error) throw error;
-
-      if (data.user) {
-        // Create user profile in database
-        const newUser = await createUser({
-          id: data.user.id,
-          email,
-          ...userData,
-        });
-
-        if (newUser) {
-          setUser(newUser);
-          return { success: true, userId: newUser.id };
-        }
+      if (error) {
+        throw error;
       }
 
+      if (!data.user) {
+        return { success: false, error: "Failed to create user account" };
+      }
+      
+      // Create user profile in database
+      const userProfile = {
+        id: data.user.id,
+        email,
+        ...userData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      const newUser = await createUser(userProfile);
+
+      if (newUser) {
+        setUser(newUser);
+        setIsAuthenticated(true);
+        return { success: true, userId: newUser.id };
+      }
+      
       return { success: false, error: "Failed to create user profile" };
     } catch (error: any) {
       console.error("Signup error:", error);
-      return { success: false, error: error.message || "Failed to sign up" };
+      return { 
+        success: false, 
+        error: error.message || "Failed to sign up. Please try again." 
+      };
     }
   };
 
@@ -162,22 +180,58 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await supabase.auth.signOut();
       setUser(null);
       setIsAuthenticated(false);
-    } catch (error) {
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+    } catch (error: any) {
       console.error("Logout error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
-  const updateUserProfile = async (userId: string, userData: Partial<User>) => {
+  const updateUserProfile = async (userData: Partial<User>): Promise<boolean> => {
     try {
-      const updatedUser = await updateUser(userId, userData);
-      
-      if (updatedUser && user && userId === user.id) {
-        setUser(updatedUser);
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to update your profile.",
+          variant: "destructive",
+        });
+        return false;
       }
       
-      return !!updatedUser;
-    } catch (error) {
+      // Update timestamp
+      userData.updatedAt = new Date();
+      
+      const updatedUser = await updateUser(user.id, userData);
+      
+      if (updatedUser) {
+        setUser(updatedUser);
+        toast({
+          title: "Profile updated",
+          description: "Your profile has been successfully updated.",
+        });
+        return true;
+      }
+      
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    } catch (error: any) {
       console.error("Update profile error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
       return false;
     }
   };

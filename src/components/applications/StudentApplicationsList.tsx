@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Application } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -94,7 +95,7 @@ const StudentApplicationsList = ({ status }: StudentApplicationsListProps) => {
               <div>
                 <h3 className="font-semibold text-lg">{application.problem?.title}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Applied on {formatDate(application.createdAt)}
+                  Applied on {application.createdAt ? formatDate(application.createdAt) : 'Unknown date'}
                 </p>
               </div>
               {getStatusBadge(application.status)}
@@ -103,19 +104,19 @@ const StudentApplicationsList = ({ status }: StudentApplicationsListProps) => {
           <CardContent>
             <div className="mb-4">
               <h4 className="text-sm font-medium">Startup:</h4>
-              <p>{application.startup?.name || "Unknown Startup"}</p>
+              <p>{application.problem?.startup?.name || "Unknown Startup"}</p>
             </div>
             
-            {application.coverLetter && (
+            {application.cover_letter && (
               <div>
                 <h4 className="text-sm font-medium mb-1">Your Cover Letter:</h4>
-                <p className="text-sm">{application.coverLetter}</p>
+                <p className="text-sm">{application.cover_letter}</p>
               </div>
             )}
           </CardContent>
           <CardFooter>
             <Button variant="outline" asChild className="w-full">
-              <Link to={`/problems/${application.problemId}`}>View Problem</Link>
+              <Link to={`/problems/${application.problem_id}`}>View Problem</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -124,4 +125,4 @@ const StudentApplicationsList = ({ status }: StudentApplicationsListProps) => {
   );
 };
 
-export default StudentApplicationsList; 
+export default StudentApplicationsList;

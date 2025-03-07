@@ -1,3 +1,4 @@
+
 export interface User {
   id: string
   email: string
@@ -7,85 +8,57 @@ export interface User {
   role: 'student' | 'startup' | 'admin'
   skills?: string[]
   languages?: string[]
-  experience?: Experience[]
-  education?: Education[]
-  availability?: Availability
-  areasOfInterest?: string[]
-  experienceLevel?: 'beginner' | 'intermediate' | 'advanced'
   // Student specific fields
   university?: string
   major?: string
   graduationYear?: string
+  experienceLevel?: 'beginner' | 'intermediate' | 'advanced'
+  areasOfInterest?: string[]
+  availability?: any
+  website_url?: string
+  linkedin_url?: string
+  location?: string
   // Startup specific fields
-  companyName?: string
-  companyDescription?: string
+  company_name?: string
+  company_description?: string
+  website_url?: string
+  linkedin_url?: string
+  founder_names?: string[]
   sectors?: string[]
   stage?: string
-  linkedinUrl?: string
-  websiteUrl?: string
-  founderNames?: string[]
-  location?: string
-  hiringStatus?: 'hiring' | 'not_hiring' | 'future_hiring'
-  createdAt: Date
-  updatedAt: Date
-  industrySectors?: string[]
-}
-
-export interface Experience {
-  id: string
-  userId: string
-  title: string
-  company: string
-  description?: string
-  startDate: Date
-  endDate?: Date
-  current: boolean
-}
-
-export interface Education {
-  id: string
-  userId: string
-  institution: string
-  degree: string
-  field: string
-  startDate: Date
-  endDate?: Date
-  current: boolean
-}
-
-export interface Availability {
-  status: 'available' | 'limited' | 'unavailable'
-  hours?: number
-  startDate?: Date
+  hiring_status?: 'hiring' | 'not_hiring' | 'future_hiring'
+  industry_sectors?: string[]
+  logo_url?: string
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 export interface Problem {
   id: string
   title: string
   description: string
-  startupId: string
+  startup_id: string
   startup?: User
-  requiredSkills: string[]
-  experienceLevel: 'beginner' | 'intermediate' | 'advanced'
+  required_skills: string[]
+  experience_level: 'beginner' | 'intermediate' | 'advanced'
   compensation?: string
-  additionalInfo?: string
+  additional_info?: string
   deadline?: Date
   status: 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled'
   featured?: boolean
-  createdAt: Date
-  updatedAt: Date
+  applications_count?: number
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 export interface Application {
   id: string
-  problemId: string
+  problem_id: string
   problem?: Problem
-  userId: string
+  user_id: string
   user?: User
-  startupId: string
-  startup?: User
+  cover_letter?: string
   status: 'pending' | 'accepted' | 'rejected'
-  coverLetter?: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt?: Date
+  updatedAt?: Date
 }

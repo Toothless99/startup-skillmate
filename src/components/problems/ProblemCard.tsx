@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Problem } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -11,9 +12,10 @@ import ApplicationForm from "@/components/applications/ApplicationForm";
 interface ProblemCardProps {
   problem: Problem;
   onViewDetails?: (problemId: string) => void;
+  isFeatured?: boolean;
 }
 
-const ProblemCard = ({ problem, onViewDetails }: ProblemCardProps) => {
+const ProblemCard = ({ problem, onViewDetails, isFeatured = false }: ProblemCardProps) => {
   const { user, isAuthenticated } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
@@ -38,7 +40,8 @@ const ProblemCard = ({ problem, onViewDetails }: ProblemCardProps) => {
     }
   };
   
-  const formatDate = (date: Date) => {
+  const formatDate = (date?: Date) => {
+    if (!date) return '';
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -48,7 +51,7 @@ const ProblemCard = ({ problem, onViewDetails }: ProblemCardProps) => {
 
   return (
     <>
-      <Card className="h-full flex flex-col">
+      <Card className={`h-full flex flex-col ${isFeatured ? 'border-primary/50' : ''}`}>
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
             <div>
@@ -66,19 +69,19 @@ const ProblemCard = ({ problem, onViewDetails }: ProblemCardProps) => {
           <p className="text-sm mb-4 line-clamp-3">{problem.description}</p>
           <div className="space-y-2">
             <div className="flex flex-wrap gap-1">
-              {problem.requiredSkills.slice(0, 3).map((skill, index) => (
+              {problem.required_skills && problem.required_skills.slice(0, 3).map((skill, index) => (
                 <Badge key={index} variant="outline" className="text-xs">
                   {skill}
                 </Badge>
               ))}
-              {problem.requiredSkills.length > 3 && (
+              {problem.required_skills && problem.required_skills.length > 3 && (
                 <Badge variant="outline" className="text-xs">
-                  +{problem.requiredSkills.length - 3} more
+                  +{problem.required_skills.length - 3} more
                 </Badge>
               )}
             </div>
             <div className="text-sm">
-              <span className="font-medium">Experience:</span> {problem.experienceLevel.charAt(0).toUpperCase() + problem.experienceLevel.slice(1)}
+              <span className="font-medium">Experience:</span> {problem.experience_level.charAt(0).toUpperCase() + problem.experience_level.slice(1)}
             </div>
             {problem.compensation && (
               <div className="text-sm">

@@ -74,6 +74,7 @@ const Problems = () => {
         
         <ProblemList 
           initialProblems={problems}
+          isLoading={isLoading}
           onViewDetails={(id) => console.log("View details for problem:", id)}
         />
       </div>

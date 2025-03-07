@@ -30,7 +30,7 @@ const ProfileCard = ({ user }: ProfileCardProps) => {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-2xl">{isStartup ? user.companyName : user.name}</CardTitle>
+              <CardTitle className="text-2xl">{isStartup ? user.company_name : user.name}</CardTitle>
               {isStartup && user.name && (
                 <CardDescription>Contact: {user.name}</CardDescription>
               )}
@@ -40,10 +40,10 @@ const ProfileCard = ({ user }: ProfileCardProps) => {
               {isStartup ? (
                 <>
                   <Badge variant="outline">{user.stage?.replace('_', ' ').toUpperCase()}</Badge>
-                  {user.hiringStatus === "hiring" && (
+                  {user.hiring_status === "hiring" && (
                     <Badge className="bg-green-500">Hiring</Badge>
                   )}
-                  {user.hiringStatus === "future_hiring" && (
+                  {user.hiring_status === "future_hiring" && (
                     <Badge variant="secondary">Hiring Soon</Badge>
                   )}
                 </>
@@ -68,10 +68,10 @@ const ProfileCard = ({ user }: ProfileCardProps) => {
         <CardContent className="space-y-6">
           {/* Bio/Description */}
           {isStartup ? (
-            user.companyDescription && (
+            user.company_description && (
               <div className="space-y-2">
                 <h3 className="font-medium">About the Company</h3>
-                <p className="text-sm text-muted-foreground whitespace-pre-line">{user.companyDescription}</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-line">{user.company_description}</p>
               </div>
             )
           ) : (
@@ -92,11 +92,11 @@ const ProfileCard = ({ user }: ProfileCardProps) => {
               </div>
             )}
             
-            {user.websiteUrl && (
+            {user.website_url && (
               <div className="flex items-center gap-2">
                 <Globe className="h-4 w-4 text-muted-foreground" />
                 <a 
-                  href={user.websiteUrl} 
+                  href={user.website_url} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-primary hover:underline"
@@ -106,11 +106,11 @@ const ProfileCard = ({ user }: ProfileCardProps) => {
               </div>
             )}
             
-            {user.linkedinUrl && (
+            {user.linkedin_url && (
               <div className="flex items-center gap-2">
                 <Linkedin className="h-4 w-4 text-muted-foreground" />
                 <a 
-                  href={user.linkedinUrl} 
+                  href={user.linkedin_url} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-primary hover:underline"
@@ -131,13 +131,13 @@ const ProfileCard = ({ user }: ProfileCardProps) => {
           {/* Startup specific */}
           {isStartup && (
             <>
-              {user.founderNames && user.founderNames.length > 0 && (
+              {user.founder_names && user.founder_names.length > 0 && (
                 <div className="space-y-2">
                   <h3 className="font-medium flex items-center">
                     <Users className="mr-1 h-4 w-4" /> Founders
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    {user.founderNames.map((founder) => (
+                    {user.founder_names.map((founder) => (
                       <Badge key={founder} variant="outline">
                         {founder}
                       </Badge>

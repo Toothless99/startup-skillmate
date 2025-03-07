@@ -11,12 +11,12 @@ const Solvers = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [solvers, setSolvers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSolvers = async () => {
       try {
-        setIsLoading(true);
+        setLoading(true);
         const students = await getStudents();
         setSolvers(students);
       } catch (error) {
@@ -27,7 +27,7 @@ const Solvers = () => {
           variant: "destructive",
         });
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
@@ -51,7 +51,6 @@ const Solvers = () => {
           
           <SolverList 
             initialSolvers={solvers}
-            isLoading={isLoading}
             onViewProfile={handleViewProfile}
           />
         </div>

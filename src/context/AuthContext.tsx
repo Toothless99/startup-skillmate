@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email: email,
           role: role as "student" | "startup",
           name: role === "student" ? "Demo Student" : "Demo User",
-          companyName: role === "startup" ? "Demo Company" : undefined,
+          company_name: role === "startup" ? "Demo Company" : undefined,
           createdAt: new Date(),
           updatedAt: new Date()
         };

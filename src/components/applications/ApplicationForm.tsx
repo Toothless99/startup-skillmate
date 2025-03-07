@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,10 +45,9 @@ const ApplicationForm = ({ problem, onClose, onSuccess }: ApplicationFormProps) 
       
       // Create application object
       const applicationData = {
-        problemId: problem.id,
-        userId: user.id,
-        startupId: problem.startupId,
-        coverLetter,
+        problem_id: problem.id,
+        user_id: user.id,
+        cover_letter: coverLetter,
         status: 'pending' as const
       };
       
@@ -78,7 +78,7 @@ const ApplicationForm = ({ problem, onClose, onSuccess }: ApplicationFormProps) 
       <div>
         <h3 className="text-lg font-medium mb-2">Applying to: {problem.title}</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Startup: {problem.startup?.name || problem.startupId}
+          Startup: {problem.startup?.name || problem.startup_id}
         </p>
       </div>
       
@@ -111,4 +111,4 @@ const ApplicationForm = ({ problem, onClose, onSuccess }: ApplicationFormProps) 
   );
 };
 
-export default ApplicationForm; 
+export default ApplicationForm;

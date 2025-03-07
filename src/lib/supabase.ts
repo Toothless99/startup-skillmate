@@ -1,3 +1,4 @@
+
 // src/lib/supabase.ts
 
 import { createClient } from '@supabase/supabase-js';
@@ -29,12 +30,15 @@ export const createUser = async (userData: Partial<User>): Promise<User | null> 
     const db = requireSupabase();
     
     const { data, error } = await db
-      .from('users')
+      .from('profiles')
       .insert([userData])
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
     return data;
   } catch (error) {
     console.error('Error creating user:', error);
@@ -47,12 +51,15 @@ export const getUserById = async (userId: string): Promise<User | null> => {
     const db = requireSupabase();
     
     const { data, error } = await db
-      .from('users')
+      .from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching user:', error);
+      throw error;
+    }
     return data;
   } catch (error) {
     console.error('Error fetching user:', error);
@@ -65,13 +72,16 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
     const db = requireSupabase();
     
     const { data, error } = await db
-      .from('users')
+      .from('profiles')
       .update(userData)
       .eq('id', userId)
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error updating user:', error);
+      throw error;
+    }
     return data;
   } catch (error) {
     console.error('Error updating user:', error);
@@ -85,11 +95,14 @@ export const getStudents = async (): Promise<User[]> => {
     const db = requireSupabase();
     
     const { data, error } = await db
-      .from('users')
+      .from('profiles')
       .select('*')
       .eq('role', 'student');
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching students:', error);
+      throw error;
+    }
     return data || [];
   } catch (error) {
     console.error('Error fetching students:', error);
@@ -103,11 +116,14 @@ export const getStartups = async (): Promise<User[]> => {
     const db = requireSupabase();
     
     const { data, error } = await db
-      .from('users')
+      .from('profiles')
       .select('*')
       .eq('role', 'startup');
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching startups:', error);
+      throw error;
+    }
     return data || [];
   } catch (error) {
     console.error('Error fetching startups:', error);
@@ -126,7 +142,10 @@ export const createProblem = async (problemData: Partial<Problem>): Promise<Prob
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error creating problem:', error);
+      throw error;
+    }
     return data;
   } catch (error) {
     console.error('Error creating problem:', error);
@@ -141,10 +160,13 @@ export const getProblems = async (): Promise<Problem[]> => {
     
     const { data, error } = await db
       .from('problems')
-      .select('*, startup:users(id, name, companyName, avatarUrl)')
-      .order('createdAt', { ascending: false });
+      .select('*, startup:profiles(*)')
+      .order('created_at', { ascending: false });
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching problems:', error);
+      throw error;
+    }
     return data || [];
   } catch (error) {
     console.error('Error fetching problems:', error);
@@ -160,10 +182,13 @@ export const getProblemsByStartupId = async (startupId: string): Promise<Problem
     const { data, error } = await db
       .from('problems')
       .select('*')
-      .eq('startupId', startupId)
-      .order('createdAt', { ascending: false });
+      .eq('startup_id', startupId)
+      .order('created_at', { ascending: false });
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching problems by startup ID:', error);
+      throw error;
+    }
     return data || [];
   } catch (error) {
     console.error('Error fetching problems by startup ID:', error);
@@ -180,7 +205,10 @@ export const createApplication = async (applicationData: Partial<Application>): 
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error creating application:', error);
+      throw error;
+    }
     return data;
   } catch (error) {
     console.error('Error creating application:', error);
@@ -192,10 +220,13 @@ export const getApplicationsForUser = async (userId: string): Promise<Applicatio
   try {
     const { data, error } = await supabase
       .from('applications')
-      .select('*, problem:problems(*), startup:users!problems(id, name, avatarUrl)')
-      .eq('userId', userId);
+      .select('*, problem:problems(*), problem.startup:profiles(*)')
+      .eq('user_id', userId);
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching applications for user:', error);
+      throw error;
+    }
     return data || [];
   } catch (error) {
     console.error('Error fetching applications for user:', error);
@@ -203,14 +234,52 @@ export const getApplicationsForUser = async (userId: string): Promise<Applicatio
   }
 };
 
-export const getApplicationsForStartup = async (startupId: string): Promise<Application[]> => {
+export const getApplicationsForProblem = async (problemId: string): Promise<Application[]> => {
   try {
     const { data, error } = await supabase
       .from('applications')
-      .select('*, problem:problems(*), user:users(id, name, avatarUrl, university, major, experienceLevel, skills)')
-      .eq('startupId', startupId);
+      .select('*, user:profiles(*)')
+      .eq('problem_id', problemId);
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching applications for problem:', error);
+      throw error;
+    }
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching applications for problem:', error);
+    return [];
+  }
+};
+
+export const getApplicationsForStartup = async (startupId: string): Promise<Application[]> => {
+  try {
+    // First get all problems for this startup
+    const { data: problems, error: problemsError } = await supabase
+      .from('problems')
+      .select('id')
+      .eq('startup_id', startupId);
+    
+    if (problemsError) {
+      console.error('Error fetching problems for startup:', problemsError);
+      throw problemsError;
+    }
+    
+    if (!problems || problems.length === 0) {
+      return [];
+    }
+    
+    const problemIds = problems.map(p => p.id);
+    
+    const { data, error } = await supabase
+      .from('applications')
+      .select('*, problem:problems(*), user:profiles(id, name, avatarUrl, university, major, experienceLevel, skills)')
+      .in('problem_id', problemIds);
+    
+    if (error) {
+      console.error('Error fetching applications for startup:', error);
+      throw error;
+    }
     return data || [];
   } catch (error) {
     console.error('Error fetching applications for startup:', error);
@@ -230,7 +299,10 @@ export const updateApplicationStatus = async (
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error updating application status:', error);
+      throw error;
+    }
     return data;
   } catch (error) {
     console.error('Error updating application status:', error);

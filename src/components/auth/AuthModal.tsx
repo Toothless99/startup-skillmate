@@ -1,66 +1,69 @@
 
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
 import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
 import { useAuth } from "@/context/AuthContext";
-import { useNavigate } from "react-router-dom";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultTab?: "login" | "signup";
-  onSuccess?: () => void;
-  redirectTo?: string;
+  onLoginSuccess?: () => void;
+  onSignupSuccess?: () => void;
 }
 
-const AuthModal = ({ isOpen, onClose, defaultTab = "login", onSuccess, redirectTo }: AuthModalProps) => {
+const AuthModal = ({ 
+  isOpen, 
+  onClose, 
+  defaultTab = "login",
+  onLoginSuccess,
+  onSignupSuccess
+}: AuthModalProps) => {
   const [activeTab, setActiveTab] = useState<"login" | "signup">(defaultTab);
   const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // If user becomes authenticated and there's a redirect path, navigate there
-    if (isAuthenticated && redirectTo) {
-      onClose();
-      navigate(redirectTo);
+  
+  // If user becomes authenticated, close the modal
+  if (isAuthenticated && isOpen) {
+    onClose();
+  }
+  
+  const handleLoginSuccess = () => {
+    if (onLoginSuccess) {
+      onLoginSuccess();
     }
-  }, [isAuthenticated, redirectTo, navigate, onClose]);
-
-  const handleSuccess = () => {
-    onSuccess?.();
-    
-    // If there's a redirect path, navigate there on success
-    if (redirectTo && isAuthenticated) {
-      navigate(redirectTo);
+    onClose();
+  };
+  
+  const handleSignupSuccess = () => {
+    if (onSignupSuccess) {
+      onSignupSuccess();
     }
-    
     onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) onClose();
+    }}>
       <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Welcome to ProblemSolver</DialogTitle>
-          <DialogDescription>
-            Connect with startups and solve real-world problems
-          </DialogDescription>
-        </DialogHeader>
+        <DialogTitle className="text-center">
+          {activeTab === "login" ? "Sign in to your account" : "Create an account"}
+        </DialogTitle>
         
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "login" | "signup")}>
+        <Tabs defaultValue={activeTab} onValueChange={(value) => setActiveTab(value as "login" | "signup")}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="login">
-            <LoginForm onSuccess={handleSuccess} />
+          <TabsContent value="login" className="mt-4">
+            <LoginForm onSuccess={handleLoginSuccess} />
           </TabsContent>
           
-          <TabsContent value="signup">
-            <SignupForm onSuccess={handleSuccess} />
+          <TabsContent value="signup" className="mt-4">
+            <SignupForm onSuccess={handleSignupSuccess} />
           </TabsContent>
         </Tabs>
       </DialogContent>

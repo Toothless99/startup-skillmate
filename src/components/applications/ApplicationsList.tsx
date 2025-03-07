@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Application } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -74,7 +75,8 @@ const ApplicationsList = ({ status }: ApplicationsListProps) => {
     }
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date?: Date) => {
+    if (!date) return 'Unknown date';
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -127,16 +129,16 @@ const ApplicationsList = ({ status }: ApplicationsListProps) => {
               <p className="font-medium">{application.problem?.title}</p>
             </div>
             
-            {application.coverLetter && (
+            {application.cover_letter && (
               <div>
                 <h4 className="text-sm font-medium mb-1">Cover Letter:</h4>
-                <p className="text-sm">{application.coverLetter}</p>
+                <p className="text-sm">{application.cover_letter}</p>
               </div>
             )}
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button variant="outline" asChild>
-              <Link to={`/solvers/${application.userId}`}>View Profile</Link>
+              <Link to={`/solvers/${application.user_id}`}>View Profile</Link>
             </Button>
             
             {application.status === "pending" && (

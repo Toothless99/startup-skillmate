@@ -3,7 +3,7 @@ export interface User {
   id: string
   email: string
   name: string
-  avatarUrl?: string
+  avatar_url?: string  // Changed from avatarUrl to match DB schema
   bio?: string
   role: 'student' | 'startup' | 'admin'
   skills?: string[]
@@ -31,8 +31,8 @@ export interface User {
   logo_url?: string
   employee_count?: string
   founding_year?: string
-  createdAt?: Date
-  updatedAt?: Date
+  created_at?: Date
+  updated_at?: Date
 }
 
 export interface Problem {
@@ -49,8 +49,8 @@ export interface Problem {
   status: 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled'
   featured?: boolean
   applications_count?: number
-  createdAt?: Date
-  updatedAt?: Date
+  created_at?: Date
+  updated_at?: Date
 }
 
 export interface Application {
@@ -61,6 +61,6 @@ export interface Application {
   user?: User
   cover_letter?: string
   status: 'pending' | 'accepted' | 'rejected'
-  createdAt?: Date
-  updatedAt?: Date
+  created_at?: Date
+  updated_at?: Date
 }

@@ -287,7 +287,7 @@ export const getApplicationsForStartup = async (startupId: string): Promise<Appl
       .select(`
         *,
         problem:problems(*),
-        user:profiles(id, name, avatarUrl, university, major, experience_level, skills)
+        user:profiles(id, name, avatar_url, university, major, experience_level, skills)
       `)
       .in('problem_id', problemIds);
     

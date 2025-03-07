@@ -65,7 +65,10 @@ const AuthModal = ({
           </TabsContent>
           
           <TabsContent value="signup" className="mt-4">
-            <SignupForm onSuccess={handleSignupSuccess} />
+            <SignupForm 
+              onSuccess={handleSignupSuccess} 
+              onLoginClick={() => setActiveTab("login")} 
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>

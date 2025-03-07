@@ -24,7 +24,7 @@ const SolverCard = ({ solver, onViewProfile }: SolverCardProps) => {
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-4">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={solver.avatarUrl || ""} alt={solver.name} />
+              <AvatarImage src={solver.avatar_url || ""} alt={solver.name} />
               <AvatarFallback>{getInitials(solver.name)}</AvatarFallback>
             </Avatar>
             <div>

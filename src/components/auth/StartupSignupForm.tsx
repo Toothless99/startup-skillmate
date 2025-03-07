@@ -23,10 +23,14 @@ const formSchema = z.object({
 });
 
 export interface StartupSignupFormProps {
+  email?: string;
+  password?: string;
+  name?: string;
+  onBack?: () => void;
   onSuccess: () => void;
 }
 
-const StartupSignupForm = ({ onSuccess }: StartupSignupFormProps) => {
+const StartupSignupForm = ({ email = "", password = "", name = "", onBack, onSuccess }: StartupSignupFormProps) => {
   const { signup } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,9 +39,9 @@ const StartupSignupForm = ({ onSuccess }: StartupSignupFormProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      password: "",
+      name: name,
+      email: email,
+      password: password,
       companyName: "",
       companyDescription: "",
       stage: "seed",
@@ -91,47 +95,53 @@ const StartupSignupForm = ({ onSuccess }: StartupSignupFormProps) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Full Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Your name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!name && (
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Full Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Your name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input type="email" placeholder="you@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!email && (
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="you@example.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type="password" placeholder="Create a password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!password && (
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="Create a password" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         
         <FormField
           control={form.control}
@@ -207,8 +217,13 @@ const StartupSignupForm = ({ onSuccess }: StartupSignupFormProps) => {
           )}
         />
         
-        <div className="pt-2">
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
+        <div className="pt-2 flex justify-between">
+          {onBack && (
+            <Button type="button" variant="outline" onClick={onBack}>
+              Back
+            </Button>
+          )}
+          <Button type="submit" className={onBack ? "" : "w-full"} disabled={isSubmitting}>
             {isSubmitting ? "Creating account..." : "Sign Up as Startup"}
           </Button>
         </div>

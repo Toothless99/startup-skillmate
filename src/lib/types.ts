@@ -11,24 +11,26 @@ export interface User {
   // Student specific fields
   university?: string
   major?: string
-  graduationYear?: string
-  experienceLevel?: 'beginner' | 'intermediate' | 'advanced'
-  areasOfInterest?: string[]
+  graduation_year?: string
+  experience_level?: 'beginner' | 'intermediate' | 'advanced'
+  areas_of_interest?: string[]
   availability?: any
   website_url?: string
   linkedin_url?: string
   location?: string
+  github_url?: string
+  portfolio_url?: string
   // Startup specific fields
   company_name?: string
   company_description?: string
-  website_url?: string
-  linkedin_url?: string
   founder_names?: string[]
   sectors?: string[]
   stage?: string
   hiring_status?: 'hiring' | 'not_hiring' | 'future_hiring'
   industry_sectors?: string[]
   logo_url?: string
+  employee_count?: string
+  founding_year?: string
   createdAt?: Date
   updatedAt?: Date
 }

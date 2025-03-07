@@ -12,6 +12,7 @@ interface AuthModalProps {
   defaultTab?: "login" | "signup";
   onLoginSuccess?: () => void;
   onSignupSuccess?: () => void;
+  redirectTo?: string;
 }
 
 const AuthModal = ({ 
@@ -19,7 +20,8 @@ const AuthModal = ({
   onClose, 
   defaultTab = "login",
   onLoginSuccess,
-  onSignupSuccess
+  onSignupSuccess,
+  redirectTo
 }: AuthModalProps) => {
   const [activeTab, setActiveTab] = useState<"login" | "signup">(defaultTab);
   const { isAuthenticated } = useAuth();
@@ -59,11 +61,11 @@ const AuthModal = ({
           </TabsList>
           
           <TabsContent value="login" className="mt-4">
-            <LoginForm onSuccess={handleLoginSuccess} />
+            <LoginForm onSuccess={handleLoginSuccess} redirectTo={redirectTo} />
           </TabsContent>
           
           <TabsContent value="signup" className="mt-4">
-            <SignupForm onSuccess={handleSignupSuccess} />
+            <SignupForm onSuccess={handleSignupSuccess} redirectTo={redirectTo} />
           </TabsContent>
         </Tabs>
       </DialogContent>

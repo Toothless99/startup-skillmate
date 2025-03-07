@@ -160,7 +160,10 @@ export const getProblems = async (): Promise<Problem[]> => {
     
     const { data, error } = await db
       .from('problems')
-      .select('*, startup:profiles(*)')
+      .select(`
+        *,
+        startup:profiles(*)
+      `)
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -220,7 +223,12 @@ export const getApplicationsForUser = async (userId: string): Promise<Applicatio
   try {
     const { data, error } = await supabase
       .from('applications')
-      .select('*, problem:problems(*), problem.startup:profiles(*)')
+      .select(`
+        *,
+        problem:problems(*),
+        problem!inner(startup_id),
+        startup:profiles!problems(*)
+      `)
       .eq('user_id', userId);
     
     if (error) {
@@ -238,7 +246,10 @@ export const getApplicationsForProblem = async (problemId: string): Promise<Appl
   try {
     const { data, error } = await supabase
       .from('applications')
-      .select('*, user:profiles(*)')
+      .select(`
+        *,
+        user:profiles(*)
+      `)
       .eq('problem_id', problemId);
     
     if (error) {
@@ -273,7 +284,11 @@ export const getApplicationsForStartup = async (startupId: string): Promise<Appl
     
     const { data, error } = await supabase
       .from('applications')
-      .select('*, problem:problems(*), user:profiles(id, name, avatarUrl, university, major, experienceLevel, skills)')
+      .select(`
+        *,
+        problem:problems(*),
+        user:profiles(id, name, avatarUrl, university, major, experience_level, skills)
+      `)
       .in('problem_id', problemIds);
     
     if (error) {

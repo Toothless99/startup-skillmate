@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -94,7 +93,7 @@ const SolverList = ({ initialSolvers, featuredOnly = false, onViewProfile }: Sol
     
     // Apply experience filter
     if (experienceFilter && experienceFilter !== "all") {
-      filtered = filtered.filter((solver) => solver.experienceLevel === experienceFilter);
+      filtered = filtered.filter((solver) => solver.experience_level === experienceFilter);
     }
     
     // Apply skills filter
@@ -120,6 +119,9 @@ const SolverList = ({ initialSolvers, featuredOnly = false, onViewProfile }: Sol
     setExperienceFilter("all");
     setSelectedSkills([]);
   };
+
+  const experienceLevelFilter = (solver: UserType) => 
+    experienceFilter === "all" || solver.experience_level === experienceFilter;
 
   return (
     <div className="space-y-6">

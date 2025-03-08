@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/ui/theme-provider";
 import { Toaster } from "./components/ui/toaster";
 import { AuthProvider } from "./context/AuthContext";
@@ -21,27 +21,25 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router>
-          <ThemeProvider defaultTheme="light" storageKey="startup-skillmate-theme">
-            <div className="flex flex-col min-h-screen">
-              <Navbar />
-              <main className="flex-1">
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/solvers" element={<Solvers />} />
-                  <Route path="/solvers/:id" element={<ProfileView />} />
-                  <Route path="/startups" element={<Startups />} />
-                  <Route path="/startups/:id" element={<ProfileView />} />
-                  <Route path="/problems" element={<Problems />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </main>
-              <Footer />
-            </div>
-            <Toaster />
-          </ThemeProvider>
-        </Router>
+        <ThemeProvider defaultTheme="light" storageKey="startup-skillmate-theme">
+          <div className="flex flex-col min-h-screen">
+            <Navbar />
+            <main className="flex-1">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/solvers" element={<Solvers />} />
+                <Route path="/solvers/:id" element={<ProfileView />} />
+                <Route path="/startups" element={<Startups />} />
+                <Route path="/startups/:id" element={<ProfileView />} />
+                <Route path="/problems" element={<Problems />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+          <Toaster />
+        </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,8 +23,8 @@ const StartupList = ({ featuredOnly = false }: StartupListProps) => {
     const fetchStartups = async () => {
       try {
         setIsLoading(true);
-        const data = await getStartups(featuredOnly);
-        setStartups(data);
+        const fetchedStartups = await getStartups();
+        setStartups(fetchedStartups);
       } catch (error) {
         console.error("Error fetching startups:", error);
         toast({
@@ -45,7 +44,7 @@ const StartupList = ({ featuredOnly = false }: StartupListProps) => {
   const filteredStartups = startups.filter(
     (startup) =>
       startup.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      startup.companyDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      startup.company_description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       startup.sectors?.some(sector => sector.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
@@ -76,12 +75,12 @@ const StartupList = ({ featuredOnly = false }: StartupListProps) => {
                   <div className="rounded-full w-12 h-12 bg-primary/10 flex items-center justify-center">
                     <Building2 className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle className="text-xl">{startup.companyName || startup.name}</CardTitle>
+                  <CardTitle className="text-xl">{startup.company_name || startup.name}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="flex-grow">
                 <div className="space-y-4">
-                  <p className="text-muted-foreground">{startup.companyDescription || startup.bio}</p>
+                  <p className="text-sm line-clamp-2">{startup.company_description || "No description provided"}</p>
                   
                   {/* Startup tags/industries */}
                   <div className="flex flex-wrap gap-2">
@@ -94,13 +93,12 @@ const StartupList = ({ featuredOnly = false }: StartupListProps) => {
                   
                   {/* Availability status */}
                   <div className="flex items-center gap-2">
-                    <Badge 
-                      variant={startup.hiringStatus === "hiring" ? "default" : "outline"}
-                      className={startup.hiringStatus === "hiring" ? "bg-green-500" : ""}
-                    >
-                      {startup.hiringStatus === "hiring" ? "Actively Hiring" : 
-                       startup.hiringStatus === "future_hiring" ? "Hiring Soon" : "Not Hiring"}
-                    </Badge>
+                    {startup.hiring_status === "hiring" && (
+                      <Badge className="bg-green-500">Hiring</Badge>
+                    )}
+                    {startup.hiring_status === "future_hiring" && (
+                      <Badge variant="secondary">Hiring Soon</Badge>
+                    )}
                   </div>
                 </div>
               </CardContent>

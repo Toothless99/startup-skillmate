@@ -68,20 +68,20 @@ const Profile = () => {
   
   // State for experience level
   const [experienceLevel, setExperienceLevel] = useState<"beginner" | "intermediate" | "advanced" | undefined>(
-    user?.experienceLevel
+    user?.experience_level
   );
   
   // State for areas of interest
   const [interestInput, setInterestInput] = useState("");
-  const [areasOfInterest, setAreasOfInterest] = useState<string[]>(user?.areasOfInterest || []);
+  const [areasOfInterest, setAreasOfInterest] = useState<string[]>(user?.areas_of_interest || []);
   
   // State for startup specific fields
   const [startupData, setStartupData] = useState({
-    companyName: user?.companyName || "",
-    companyDescription: user?.companyDescription || "",
-    websiteUrl: user?.websiteUrl || "",
-    linkedinUrl: user?.linkedinUrl || "",
-    founderNames: user?.founderNames?.join(", ") || "",
+    company_name: user?.company_name || "",
+    company_description: user?.company_description || "",
+    website_url: user?.website_url || "",
+    linkedin_url: user?.linkedin_url || "",
+    founder_names: user?.founder_names?.join(", ") || "",
     stage: user?.stage || ""
   });
   

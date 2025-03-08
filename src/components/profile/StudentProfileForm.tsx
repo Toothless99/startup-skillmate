@@ -96,7 +96,7 @@ const StudentProfileForm = ({ user, onSubmit }: StudentProfileFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [skills, setSkills] = useState<string[]>(user.skills || []);
   const [languages, setLanguages] = useState<string[]>(user.languages || []);
-  const [areasOfInterest, setAreasOfInterest] = useState<string[]>(user.areasOfInterest || []);
+  const [areasOfInterest, setAreasOfInterest] = useState<string[]>(user.areas_of_interest || []);
   
   const [formData, setFormData] = useState({
     name: user.name || "",

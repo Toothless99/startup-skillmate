@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +45,7 @@ const ProblemDetailsDialog = ({ isOpen, onClose, problem, onApply }: ProblemDeta
             </div>
             <div className="flex items-center space-x-1 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
-              <span>Posted {format(new Date(problem.createdAt), "MMM d, yyyy")}</span>
+              <span>Posted {format(new Date(problem.created_at), "MMM d, yyyy")}</span>
             </div>
             {problem.deadline && (
               <div className="flex items-center space-x-1 text-sm text-muted-foreground">

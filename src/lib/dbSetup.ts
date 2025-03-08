@@ -1,7 +1,7 @@
-
 import { supabase } from './supabase';
 import { mockSolvers } from './mockData';
 import { User, Problem } from './types';
+import { v4 as uuidv4 } from 'uuid';
 
 // Function to populate the database with mock data
 export const populateDatabase = async () => {
@@ -21,10 +21,32 @@ export const populateDatabase = async () => {
     if (!existingProfiles || existingProfiles.length === 0) {
       console.log('Populating database with mock data...');
       
-      // Insert mock solvers
+      // Create users in the auth.users table first
+      const userIds = await Promise.all(mockSolvers.map(async (solver) => {
+        const { user, error } = await supabase.auth.signUp({
+          email: solver.email,
+          password: 'defaultPassword' // Use a default password
+        });
+        
+        if (error) {
+          console.error('Error creating user:', error);
+          return null;
+        }
+        return user?.id; // Return the created user ID
+      }));
+
+      // Filter out any null IDs (in case of errors)
+      const validUserIds = userIds.filter(id => id !== null);
+
+      // Insert mock solvers with valid user IDs
+      const solversWithIds = mockSolvers.map((solver, index) => ({
+        ...solver,
+        id: validUserIds[index], // Use the corresponding user ID
+      }));
+
       const { error: solversError } = await supabase
         .from('profiles')
-        .insert(mockSolvers);
+        .insert(solversWithIds);
       
       if (solversError) {
         console.error('Error inserting mock solvers:', solversError);
@@ -34,7 +56,7 @@ export const populateDatabase = async () => {
       // Create mock startups
       const mockStartups: User[] = [
         {
-          id: "startup-1",
+          id: uuidv4(),
           email: "info@techwave.com",
           name: "TechWave Solutions",
           role: "startup",
@@ -51,7 +73,7 @@ export const populateDatabase = async () => {
           founding_year: "2021",
         },
         {
-          id: "startup-2",
+          id: uuidv4(),
           email: "contact@greengrow.com",
           name: "GreenGrow",
           role: "startup",
@@ -82,7 +104,7 @@ export const populateDatabase = async () => {
       // Create mock problems
       const mockProblems: Problem[] = [
         {
-          id: "problem-1",
+          id: uuidv4(),
           title: "Build a React Native Mobile App",
           description: "We need a skilled developer to build a cross-platform mobile application for our startup.",
           startup_id: "startup-1",
@@ -94,7 +116,7 @@ export const populateDatabase = async () => {
           featured: true,
         },
         {
-          id: "problem-2",
+          id: uuidv4(),
           title: "Design a New Product Landing Page",
           description: "Looking for a UI/UX designer to create a compelling landing page for our new SaaS product.",
           startup_id: "startup-1",
@@ -106,7 +128,7 @@ export const populateDatabase = async () => {
           featured: false,
         },
         {
-          id: "problem-3",
+          id: uuidv4(),
           title: "Implement Machine Learning Model",
           description: "We need help implementing a recommendation algorithm for our e-commerce platform.",
           startup_id: "startup-2",

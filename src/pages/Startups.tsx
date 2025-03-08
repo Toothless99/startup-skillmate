@@ -54,17 +54,17 @@ const Startups = () => {
       email: "techwave@example.com",
       name: "TechWave Solutions",
       role: "startup",
-      companyName: "TechWave Solutions",
-      companyDescription: "Building innovative AI solutions for enterprise customers.",
+      company_name: "TechWave Solutions",
+      company_description: "Building innovative AI solutions for enterprise customers.",
       sectors: ["AI", "Enterprise Software", "SaaS"],
       stage: "seed",
-      hiringStatus: "hiring",
+      hiring_status: "hiring",
       location: "San Francisco, CA",
-      founderNames: ["Alex Johnson", "Maria Garcia"],
-      websiteUrl: "https://techwave.example.com",
-      linkedinUrl: "https://linkedin.com/company/techwave",
-      employeeCount: "11-50",
-      foundingYear: "2021",
+      founder_names: ["Alex Johnson", "Maria Garcia"],
+      website_url: "https://techwave.example.com",
+      linkedin_url: "https://linkedin.com/company/techwave",
+      employee_count: "11-50",
+      founding_year: "2021",
     },
     // Add more mock startups as needed
   ];
@@ -84,13 +84,13 @@ const Startups = () => {
               <CardContent className="p-6">
                 <div className="flex items-center gap-4 mb-4">
                   <Avatar className="h-16 w-16">
-                    <AvatarImage src={startup.avatarUrl} alt={startup.companyName || startup.name} />
+                    <AvatarImage src={startup.avatar_url || ""} alt={startup.company_name || startup.name} />
                     <AvatarFallback className="text-lg">
-                      {getInitials(startup.companyName || startup.name)}
+                      {getInitials(startup.company_name || startup.name)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className="text-xl font-semibold">{startup.companyName || startup.name}</h3>
+                    <h3 className="text-xl font-semibold">{startup.company_name || startup.name}</h3>
                     {startup.stage && (
                       <Badge variant="outline" className="mt-1">
                         {startup.stage.charAt(0).toUpperCase() + startup.stage.slice(1)}
@@ -100,7 +100,7 @@ const Startups = () => {
                 </div>
                 
                 <p className="text-sm mb-4 line-clamp-3">
-                  {startup.companyDescription || "No description provided"}
+                  {startup.company_description || "No description provided"}
                 </p>
                 
                 {startup.sectors && startup.sectors.length > 0 && (
@@ -123,18 +123,18 @@ const Startups = () => {
                     </div>
                   )}
                   
-                  {startup.employeeCount && (
+                  {startup.employee_count && (
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-muted-foreground" />
-                      <span>{startup.employeeCount} employees</span>
+                      <span>{startup.employee_count} employees</span>
                     </div>
                   )}
                   
-                  {startup.websiteUrl && (
+                  {startup.website_url && (
                     <div className="flex items-center gap-2">
                       <Globe className="h-4 w-4 text-muted-foreground" />
                       <a 
-                        href={startup.websiteUrl} 
+                        href={startup.website_url} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-primary hover:underline"
@@ -144,10 +144,10 @@ const Startups = () => {
                     </div>
                   )}
                   
-                  {startup.foundingYear && (
+                  {startup.founding_year && (
                     <div className="flex items-center gap-2">
                       <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <span>Founded in {startup.foundingYear}</span>
+                      <span>Founded in {startup.founding_year}</span>
                     </div>
                   )}
                 </div>

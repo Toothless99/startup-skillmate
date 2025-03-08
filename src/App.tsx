@@ -15,7 +15,7 @@ import ProfileView from "./pages/ProfileView";
 import NotFound from "./pages/NotFound";
 import "react-day-picker/dist/style.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { initializeDatabase } from "./lib/supabase-init";
+import { initializeDatabase } from "./lib/dbSetup";
 import { useToast } from "./hooks/use-toast";
 
 // Create a client
@@ -34,8 +34,8 @@ function App() {
           console.log("Database setup successful");
         } else {
           toast({
-            title: "Database Setup Error",
-            description: "There was an issue setting up the database. Some features may not work correctly.",
+            title: "Database Setup Warning",
+            description: "There was an issue setting up the mock data. Demo functionality might be limited.",
             variant: "destructive",
           });
         }

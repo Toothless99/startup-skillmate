@@ -22,32 +22,16 @@ export const populateDatabase = async () => {
     if (!existingProfiles || existingProfiles.length === 0) {
       console.log('Populating database with mock data...');
       
-      // Create users in the auth.users table first
-      const userIds = await Promise.all(mockSolvers.map(async (solver) => {
-        const { data, error } = await supabase.auth.signUp({
-          email: solver.email,
-          password: 'defaultPassword' // Use a default password
-        });
-        
-        if (error) {
-          console.error('Error creating user:', error);
-          return null;
-        }
-        return data.user?.id; // Updated to use data.user?.id instead of user?.id
-      }));
-
-      // Filter out any null IDs (in case of errors)
-      const validUserIds = userIds.filter(id => id !== null);
-
-      // Insert mock solvers with valid user IDs
-      const solversWithIds = mockSolvers.map((solver, index) => ({
+      // Instead of creating auth users (which may fail due to Supabase restrictions),
+      // let's directly insert mock profiles with generated UUIDs
+      const mockSolversWithIds = mockSolvers.map(solver => ({
         ...solver,
-        id: validUserIds[index], // Use the corresponding user ID
+        id: uuidv4(), // Generate a UUID for each solver
       }));
 
       const { error: solversError } = await supabase
         .from('profiles')
-        .insert(solversWithIds);
+        .insert(mockSolversWithIds);
       
       if (solversError) {
         console.error('Error inserting mock solvers:', solversError);
@@ -102,13 +86,13 @@ export const populateDatabase = async () => {
         return false;
       }
       
-      // Create mock problems
+      // Create mock problems with the first startup ID
       const mockProblems: Problem[] = [
         {
           id: uuidv4(),
           title: "Build a React Native Mobile App",
           description: "We need a skilled developer to build a cross-platform mobile application for our startup.",
-          startup_id: "startup-1",
+          startup_id: mockStartups[0].id, // Use the actual ID from the first mock startup
           required_skills: ["React Native", "JavaScript", "Mobile Development"],
           experience_level: "intermediate",
           compensation: "$2000-$3000",
@@ -120,7 +104,7 @@ export const populateDatabase = async () => {
           id: uuidv4(),
           title: "Design a New Product Landing Page",
           description: "Looking for a UI/UX designer to create a compelling landing page for our new SaaS product.",
-          startup_id: "startup-1",
+          startup_id: mockStartups[0].id, // Use the actual ID from the first mock startup
           required_skills: ["UI/UX Design", "Figma", "Web Design"],
           experience_level: "beginner",
           compensation: "$500-$1000",
@@ -132,7 +116,7 @@ export const populateDatabase = async () => {
           id: uuidv4(),
           title: "Implement Machine Learning Model",
           description: "We need help implementing a recommendation algorithm for our e-commerce platform.",
-          startup_id: "startup-2",
+          startup_id: mockStartups[1].id, // Use the actual ID from the second mock startup
           required_skills: ["Python", "Machine Learning", "Data Science"],
           experience_level: "advanced",
           compensation: "$3000-$4000",
@@ -168,6 +152,7 @@ export const populateDatabase = async () => {
 export const initializeDatabase = async () => {
   try {
     const result = await populateDatabase();
+    console.log('Database initialization:', result ? 'successful' : 'failed');
     return result;
   } catch (error) {
     console.error('Error initializing database:', error);

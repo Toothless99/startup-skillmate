@@ -3,7 +3,7 @@ import { Routes, Route, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "./components/ui/theme-provider";
 import { Toaster } from "./components/ui/toaster";
 import { AuthProvider } from "./context/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import Home from "./pages/Home";
@@ -23,30 +23,38 @@ const queryClient = new QueryClient();
 
 function App() {
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const [dbInitialized, setDbInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Initialize the database when the app loads
     const setupDatabase = async () => {
       try {
+        setIsLoading(true);
         // Initialize the database with mock data
         const success = await initializeDatabase();
+        
+        setDbInitialized(success);
+        
         if (success) {
           console.log("Database setup successful");
         } else {
           toast({
-            title: "Database Setup Warning",
-            description: "There was an issue setting up the mock data. Demo functionality might be limited.",
-            variant: "destructive",
+            title: "Mock Data Setup Warning",
+            description: "Some mock data could not be loaded. Demo functionality might be limited, but the app will still work.",
+            variant: "default",
           });
         }
       } catch (error) {
         console.error("Database initialization error:", error);
+        setDbInitialized(false);
         toast({
-          title: "Database Error",
-          description: "Failed to initialize the database. Please check your connection to Supabase.",
+          title: "Database Warning",
+          description: "Unable to initialize some mock data. The app will still function, but with limited demo data.",
           variant: "destructive",
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -60,16 +68,22 @@ function App() {
           <div className="flex flex-col min-h-screen">
             <Navbar />
             <main className="flex-1">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/solvers" element={<Solvers />} />
-                <Route path="/solvers/:id" element={<ProfileView />} />
-                <Route path="/startups" element={<Startups />} />
-                <Route path="/startups/:id" element={<ProfileView />} />
-                <Route path="/problems" element={<Problems />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              {isLoading ? (
+                <div className="flex items-center justify-center h-full py-20">
+                  <p className="text-lg text-gray-600">Loading application data...</p>
+                </div>
+              ) : (
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/solvers" element={<Solvers />} />
+                  <Route path="/solvers/:id" element={<ProfileView />} />
+                  <Route path="/startups" element={<Startups />} />
+                  <Route path="/startups/:id" element={<ProfileView />} />
+                  <Route path="/problems" element={<Problems />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              )}
             </main>
             <Footer />
           </div>

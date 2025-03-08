@@ -24,9 +24,12 @@ export const populateDatabase = async () => {
     if (!existingProfiles || existingProfiles.length === 0) {
       console.log('No existing profiles found, adding mock data...');
       
-      // Use service role key for admin operations
-      // Note: In a real app, this should be done via a secure backend function
-      // For this demo, we'll manually add data with direct inserts
+      // Try to add mock data using anonymous access
+      // This will use the RLS policies that are already in place
+      
+      // Create local variables to store successfully inserted users
+      let insertedSolvers = [];
+      let insertedStartups = [];
       
       // Create mock solvers with generated UUIDs
       const mockSolversWithIds = mockSolvers.map(solver => ({
@@ -34,17 +37,22 @@ export const populateDatabase = async () => {
         id: uuidv4(),
       }));
 
-      // Insert mock solvers one by one to better handle errors
+      // Attempt to insert mock solvers - catch errors but continue
       for (const solver of mockSolversWithIds) {
-        const { error: solverError } = await supabase
-          .from('profiles')
-          .insert(solver);
-        
-        if (solverError) {
-          console.error(`Error inserting solver ${solver.name}:`, solverError);
-          // Continue with other inserts even if one fails
-        } else {
-          console.log(`Successfully added solver: ${solver.name}`);
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .insert(solver)
+            .select();
+          
+          if (error) {
+            console.error(`Error inserting solver ${solver.name}:`, error);
+          } else if (data && data.length > 0) {
+            console.log(`Successfully added solver: ${solver.name}`);
+            insertedSolvers.push(data[0]);
+          }
+        } catch (err) {
+          console.error(`Exception inserting solver ${solver.name}:`, err);
         }
       }
       
@@ -86,91 +94,100 @@ export const populateDatabase = async () => {
         }
       ];
       
-      // Insert mock startups one by one
+      // Attempt to insert mock startups - catch errors but continue
       for (const startup of mockStartups) {
-        const { error: startupError } = await supabase
-          .from('profiles')
-          .insert(startup);
-        
-        if (startupError) {
-          console.error(`Error inserting startup ${startup.name}:`, startupError);
-        } else {
-          console.log(`Successfully added startup: ${startup.name}`);
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .insert(startup)
+            .select();
+          
+          if (error) {
+            console.error(`Error inserting startup ${startup.name}:`, error);
+          } else if (data && data.length > 0) {
+            console.log(`Successfully added startup: ${startup.name}`);
+            insertedStartups.push(data[0]);
+          }
+        } catch (err) {
+          console.error(`Exception inserting startup ${startup.name}:`, err);
         }
       }
       
-      // Store successfully inserted startups for problems
-      const { data: insertedStartups, error: fetchError } = await supabase
-        .from('profiles')
-        .select('id, name')
-        .eq('role', 'startup');
+      // If we have successful startups, create problems
+      if (insertedStartups.length > 0) {
+        // Use the first startup ID for mock problems
+        const firstStartupId = insertedStartups[0].id;
+        const secondStartupId = insertedStartups.length > 1 ? insertedStartups[1].id : firstStartupId;
+        
+        // Create mock problems with the startup IDs
+        const mockProblems: Problem[] = [
+          {
+            id: uuidv4(),
+            title: "Build a React Native Mobile App",
+            description: "We need a skilled developer to build a cross-platform mobile application for our startup.",
+            startup_id: firstStartupId,
+            required_skills: ["React Native", "JavaScript", "Mobile Development"],
+            experience_level: "intermediate",
+            compensation: "$2000-$3000",
+            additional_info: "This is a 4-6 week project with potential for ongoing work.",
+            status: "open",
+            featured: true,
+          },
+          {
+            id: uuidv4(),
+            title: "Design a New Product Landing Page",
+            description: "Looking for a UI/UX designer to create a compelling landing page for our new SaaS product.",
+            startup_id: firstStartupId,
+            required_skills: ["UI/UX Design", "Figma", "Web Design"],
+            experience_level: "beginner",
+            compensation: "$500-$1000",
+            additional_info: "Should be completed within 2 weeks.",
+            status: "open",
+            featured: false,
+          },
+          {
+            id: uuidv4(),
+            title: "Implement Machine Learning Model",
+            description: "We need help implementing a recommendation algorithm for our e-commerce platform.",
+            startup_id: secondStartupId,
+            required_skills: ["Python", "Machine Learning", "Data Science"],
+            experience_level: "advanced",
+            compensation: "$3000-$4000",
+            additional_info: "This is a challenging project requiring strong ML skills.",
+            status: "open",
+            featured: true,
+          }
+        ];
+        
+        // Attempt to insert mock problems - catch errors but continue
+        for (const problem of mockProblems) {
+          try {
+            const { error: problemError } = await supabase
+              .from('problems')
+              .insert(problem);
+            
+            if (problemError) {
+              console.error(`Error inserting problem "${problem.title}":`, problemError);
+            } else {
+              console.log(`Successfully added problem: ${problem.title}`);
+            }
+          } catch (err) {
+            console.error(`Exception inserting problem "${problem.title}":`, err);
+          }
+        }
+      } else {
+        console.log('No startups were successfully inserted, skipping problem creation');
+      }
       
-      if (fetchError || !insertedStartups || insertedStartups.length === 0) {
-        console.error('Error fetching inserted startups:', fetchError);
+      // Return success if we inserted any data
+      const hasInsertedAnyData = insertedSolvers.length > 0 || insertedStartups.length > 0;
+      if (hasInsertedAnyData) {
+        console.log('Database successfully populated with at least some mock data!');
+        return true;
+      } else {
+        console.log('Failed to insert any mock data.');
         return false;
       }
-      
-      console.log('Inserted startups:', insertedStartups);
-      
-      // Use the first startup ID for mock problems
-      const firstStartupId = insertedStartups[0].id;
-      const secondStartupId = insertedStartups.length > 1 ? insertedStartups[1].id : firstStartupId;
-      
-      // Create mock problems with the startup IDs
-      const mockProblems: Problem[] = [
-        {
-          id: uuidv4(),
-          title: "Build a React Native Mobile App",
-          description: "We need a skilled developer to build a cross-platform mobile application for our startup.",
-          startup_id: firstStartupId,
-          required_skills: ["React Native", "JavaScript", "Mobile Development"],
-          experience_level: "intermediate",
-          compensation: "$2000-$3000",
-          additional_info: "This is a 4-6 week project with potential for ongoing work.",
-          status: "open",
-          featured: true,
-        },
-        {
-          id: uuidv4(),
-          title: "Design a New Product Landing Page",
-          description: "Looking for a UI/UX designer to create a compelling landing page for our new SaaS product.",
-          startup_id: firstStartupId,
-          required_skills: ["UI/UX Design", "Figma", "Web Design"],
-          experience_level: "beginner",
-          compensation: "$500-$1000",
-          additional_info: "Should be completed within 2 weeks.",
-          status: "open",
-          featured: false,
-        },
-        {
-          id: uuidv4(),
-          title: "Implement Machine Learning Model",
-          description: "We need help implementing a recommendation algorithm for our e-commerce platform.",
-          startup_id: secondStartupId,
-          required_skills: ["Python", "Machine Learning", "Data Science"],
-          experience_level: "advanced",
-          compensation: "$3000-$4000",
-          additional_info: "This is a challenging project requiring strong ML skills.",
-          status: "open",
-          featured: true,
-        }
-      ];
-      
-      // Insert mock problems one by one
-      for (const problem of mockProblems) {
-        const { error: problemError } = await supabase
-          .from('problems')
-          .insert(problem);
-        
-        if (problemError) {
-          console.error(`Error inserting problem "${problem.title}":`, problemError);
-        } else {
-          console.log(`Successfully added problem: ${problem.title}`);
-        }
-      }
-      
-      console.log('Database successfully populated with mock data!');
-      return true;
     }
     
     console.log('Database already contains data, skipping population.');
@@ -195,7 +212,6 @@ export const initializeDatabase = async () => {
 
 // This function is no longer needed as we're working with the RLS policies directly
 export const setupRlsHelperFunctions = async () => {
-  console.log('RLS helper functions not needed, using SQL policies directly');
+  console.log('RLS helper functions not needed, skipping...');
   return true;
 };
-

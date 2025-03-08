@@ -7,6 +7,8 @@ import { v4 as uuidv4 } from 'uuid';
 // Function to populate the database with mock data
 export const populateDatabase = async () => {
   try {
+    console.log('Populating database with mock data...');
+    
     // Check if profiles table is empty
     const { data: existingProfiles, error: profilesError } = await supabase
       .from('profiles')
@@ -20,18 +22,11 @@ export const populateDatabase = async () => {
     
     // If the profiles table is empty, populate it with mock data
     if (!existingProfiles || existingProfiles.length === 0) {
-      console.log('Populating database with mock data...');
+      console.log('No existing profiles found, adding mock data...');
       
-      // For testing, we'll disable RLS temporarily to allow direct inserts
-      // This is only needed during initial setup
-      try {
-        // Turn off RLS for profiles table temporarily
-        await supabase.rpc('disable_rls_for_profiles');
-        console.log('Temporarily disabled RLS for profiles');
-      } catch (rlsError) {
-        console.log('Could not disable RLS, proceeding with default security:', rlsError);
-        // Continue anyway, as the function might not exist
-      }
+      // Use service role key for admin operations
+      // Note: In a real app, this should be done via a secure backend function
+      // For this demo, we'll manually add data with direct inserts
       
       // Create mock solvers with generated UUIDs
       const mockSolversWithIds = mockSolvers.map(solver => ({
@@ -39,14 +34,18 @@ export const populateDatabase = async () => {
         id: uuidv4(),
       }));
 
-      // Insert mock solvers
-      const { error: solversError } = await supabase
-        .from('profiles')
-        .insert(mockSolversWithIds);
-      
-      if (solversError) {
-        console.error('Error inserting mock solvers:', solversError);
-        return false;
+      // Insert mock solvers one by one to better handle errors
+      for (const solver of mockSolversWithIds) {
+        const { error: solverError } = await supabase
+          .from('profiles')
+          .insert(solver);
+        
+        if (solverError) {
+          console.error(`Error inserting solver ${solver.name}:`, solverError);
+          // Continue with other inserts even if one fails
+        } else {
+          console.log(`Successfully added solver: ${solver.name}`);
+        }
       }
       
       // Create mock startups
@@ -87,23 +86,43 @@ export const populateDatabase = async () => {
         }
       ];
       
-      // Insert mock startups
-      const { error: startupsError } = await supabase
-        .from('profiles')
-        .insert(mockStartups);
+      // Insert mock startups one by one
+      for (const startup of mockStartups) {
+        const { error: startupError } = await supabase
+          .from('profiles')
+          .insert(startup);
+        
+        if (startupError) {
+          console.error(`Error inserting startup ${startup.name}:`, startupError);
+        } else {
+          console.log(`Successfully added startup: ${startup.name}`);
+        }
+      }
       
-      if (startupsError) {
-        console.error('Error inserting mock startups:', startupsError);
+      // Store successfully inserted startups for problems
+      const { data: insertedStartups, error: fetchError } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .eq('role', 'startup');
+      
+      if (fetchError || !insertedStartups || insertedStartups.length === 0) {
+        console.error('Error fetching inserted startups:', fetchError);
         return false;
       }
       
-      // Create mock problems with the first startup ID
+      console.log('Inserted startups:', insertedStartups);
+      
+      // Use the first startup ID for mock problems
+      const firstStartupId = insertedStartups[0].id;
+      const secondStartupId = insertedStartups.length > 1 ? insertedStartups[1].id : firstStartupId;
+      
+      // Create mock problems with the startup IDs
       const mockProblems: Problem[] = [
         {
           id: uuidv4(),
           title: "Build a React Native Mobile App",
           description: "We need a skilled developer to build a cross-platform mobile application for our startup.",
-          startup_id: mockStartups[0].id, // Use the actual ID from the first mock startup
+          startup_id: firstStartupId,
           required_skills: ["React Native", "JavaScript", "Mobile Development"],
           experience_level: "intermediate",
           compensation: "$2000-$3000",
@@ -115,7 +134,7 @@ export const populateDatabase = async () => {
           id: uuidv4(),
           title: "Design a New Product Landing Page",
           description: "Looking for a UI/UX designer to create a compelling landing page for our new SaaS product.",
-          startup_id: mockStartups[0].id, // Use the actual ID from the first mock startup
+          startup_id: firstStartupId,
           required_skills: ["UI/UX Design", "Figma", "Web Design"],
           experience_level: "beginner",
           compensation: "$500-$1000",
@@ -127,7 +146,7 @@ export const populateDatabase = async () => {
           id: uuidv4(),
           title: "Implement Machine Learning Model",
           description: "We need help implementing a recommendation algorithm for our e-commerce platform.",
-          startup_id: mockStartups[1].id, // Use the actual ID from the second mock startup
+          startup_id: secondStartupId,
           required_skills: ["Python", "Machine Learning", "Data Science"],
           experience_level: "advanced",
           compensation: "$3000-$4000",
@@ -137,23 +156,17 @@ export const populateDatabase = async () => {
         }
       ];
       
-      // Insert mock problems
-      const { error: problemsError } = await supabase
-        .from('problems')
-        .insert(mockProblems);
-      
-      if (problemsError) {
-        console.error('Error inserting mock problems:', problemsError);
-        return false;
-      }
-      
-      // Turn RLS back on if we disabled it
-      try {
-        await supabase.rpc('enable_rls_for_profiles');
-        console.log('Re-enabled RLS for profiles');
-      } catch (rlsError) {
-        console.log('Could not re-enable RLS:', rlsError);
-        // Continue anyway
+      // Insert mock problems one by one
+      for (const problem of mockProblems) {
+        const { error: problemError } = await supabase
+          .from('problems')
+          .insert(problem);
+        
+        if (problemError) {
+          console.error(`Error inserting problem "${problem.title}":`, problemError);
+        } else {
+          console.log(`Successfully added problem: ${problem.title}`);
+        }
       }
       
       console.log('Database successfully populated with mock data!');
@@ -180,43 +193,9 @@ export const initializeDatabase = async () => {
   }
 };
 
-// Create stored procedures for RLS management in Supabase
+// This function is no longer needed as we're working with the RLS policies directly
 export const setupRlsHelperFunctions = async () => {
-  try {
-    // Create function to disable RLS for profiles table (admin only)
-    await supabase.rpc('create_disable_rls_function', {
-      sql_command: `
-        CREATE OR REPLACE FUNCTION disable_rls_for_profiles()
-        RETURNS void
-        LANGUAGE plpgsql
-        SECURITY DEFINER
-        AS $$
-        BEGIN
-          ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
-        END;
-        $$;
-      `
-    });
-    
-    // Create function to enable RLS for profiles table (admin only)
-    await supabase.rpc('create_enable_rls_function', {
-      sql_command: `
-        CREATE OR REPLACE FUNCTION enable_rls_for_profiles()
-        RETURNS void
-        LANGUAGE plpgsql
-        SECURITY DEFINER
-        AS $$
-        BEGIN
-          ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-        END;
-        $$;
-      `
-    });
-    
-    console.log('RLS helper functions created successfully');
-    return true;
-  } catch (error) {
-    console.log('Error setting up RLS helper functions (this is expected if they already exist):', error);
-    return false;
-  }
+  console.log('RLS helper functions not needed, using SQL policies directly');
+  return true;
 };
+

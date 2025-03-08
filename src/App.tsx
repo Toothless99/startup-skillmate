@@ -15,7 +15,7 @@ import ProfileView from "./pages/ProfileView";
 import NotFound from "./pages/NotFound";
 import "react-day-picker/dist/style.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { initializeDatabase, setupRlsHelperFunctions } from "./lib/dbSetup";
+import { initializeDatabase } from "./lib/dbSetup";
 import { useToast } from "./hooks/use-toast";
 
 // Create a client
@@ -29,10 +29,7 @@ function App() {
     // Initialize the database when the app loads
     const setupDatabase = async () => {
       try {
-        // First setup RLS helper functions if needed
-        await setupRlsHelperFunctions();
-        
-        // Then initialize the database
+        // Initialize the database with mock data
         const success = await initializeDatabase();
         if (success) {
           console.log("Database setup successful");

@@ -1,7 +1,9 @@
-import { Routes, Route } from "react-router-dom";
+
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "./components/ui/theme-provider";
 import { Toaster } from "./components/ui/toaster";
 import { AuthProvider } from "./context/AuthContext";
+import { useEffect } from "react";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import Home from "./pages/Home";
@@ -13,11 +15,43 @@ import ProfileView from "./pages/ProfileView";
 import NotFound from "./pages/NotFound";
 import "react-day-picker/dist/style.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { initializeDatabase } from "./lib/supabase-init";
+import { useToast } from "./hooks/use-toast";
 
 // Create a client
 const queryClient = new QueryClient();
 
 function App() {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Initialize the database when the app loads
+    const setupDatabase = async () => {
+      try {
+        const success = await initializeDatabase();
+        if (success) {
+          console.log("Database setup successful");
+        } else {
+          toast({
+            title: "Database Setup Error",
+            description: "There was an issue setting up the database. Some features may not work correctly.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Database initialization error:", error);
+        toast({
+          title: "Database Error",
+          description: "Failed to initialize the database. Please check your connection.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    setupDatabase();
+  }, [toast]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

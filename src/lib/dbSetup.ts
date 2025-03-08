@@ -1,3 +1,4 @@
+
 import { supabase } from './supabase';
 import { mockSolvers } from './mockData';
 import { User, Problem } from './types';
@@ -23,7 +24,7 @@ export const populateDatabase = async () => {
       
       // Create users in the auth.users table first
       const userIds = await Promise.all(mockSolvers.map(async (solver) => {
-        const { user, error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: solver.email,
           password: 'defaultPassword' // Use a default password
         });
@@ -32,7 +33,7 @@ export const populateDatabase = async () => {
           console.error('Error creating user:', error);
           return null;
         }
-        return user?.id; // Return the created user ID
+        return data.user?.id; // Updated to use data.user?.id instead of user?.id
       }));
 
       // Filter out any null IDs (in case of errors)

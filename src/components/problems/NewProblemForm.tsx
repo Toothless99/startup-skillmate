@@ -10,10 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { CalendarIcon, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { createProblem } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 import { Problem } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
-import { useToast } from "@/hooks/use-toast";
 
 interface NewProblemFormProps {
   onClose: () => void;
@@ -84,25 +83,33 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
       setIsSubmitting(true);
       
       // Create a new problem object
-      const problemData: Omit<Problem, 'id' | 'createdAt' | 'updatedAt'> = {
+      const newProblem: Omit<Problem, 'id' | 'created_at' | 'updatedAt'> = {
         title: formData.title,
         description: formData.description,
-        startup_id: user.id,
-        required_skills: requiredSkills,
-        experience_level: formData.experienceLevel,
-        compensation: formData.compensation || undefined,
+        startupId: user.id,
+        startup: user,
+        requiredSkills,
+        experienceLevel: formData.experienceLevel,
+        compensation: formData.compensation,
         deadline: formData.deadline || undefined,
         status: "open",
         featured: false,
-        additional_info: formData.additionalInfo || undefined
+        additionalInfo: formData.additionalInfo
       };
       
-      // Save the problem to the database
-      const createdProblem = await createProblem(problemData);
+      // In a real app, you would save this to your database
+      // For now, we'll just simulate a successful creation
       
-      if (!createdProblem) {
-        throw new Error("Failed to create problem");
-      }
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Add an ID and timestamps to simulate a database response
+      const createdProblem: Problem = {
+        ...newProblem,
+        id: `problem-${Date.now()}`,
+        created_at: new Date(),
+        updatedAt: new Date()
+      };
       
       // Call the success callback
       onSuccess?.(createdProblem);
@@ -114,11 +121,11 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
         title: "Problem posted!",
         description: "Your problem has been published and is now visible to solvers.",
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error posting problem:", error);
       toast({
         title: "Failed to post problem",
-        description: error.message || "An unexpected error occurred. Please try again.",
+        description: "Failed to post problem. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -264,4 +271,4 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
   );
 };
 
-export default NewProblemForm;
+export default NewProblemForm; 

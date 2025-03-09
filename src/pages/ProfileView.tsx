@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ const ProfileView = () => {
       
       try {
         setIsLoading(true);
-        const userData = await getProfileById(id);
+        const userData = await getUserById(id);
         setProfile(userData);
       } catch (error) {
         console.error("Error fetching profile:", error);

@@ -84,8 +84,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           role: role as "student" | "startup",
           name: role === "student" ? "Demo Student" : "Demo User",
           company_name: role === "startup" ? "Demo Company" : undefined,
-          createdAt: new Date(),
-          updatedAt: new Date()
+          created_at: new Date(),
+          updated_at: new Date()
         };
         
         setUser(mockUser as User);
@@ -153,8 +153,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         id: data.user.id,
         email,
         ...userData,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        created_at: new Date(),
+        updated_at: new Date()
       };
       
       const newUser = await createUser(userProfile);
@@ -205,10 +205,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return false;
       }
       
-      // Update timestamp
-      userData.updated_at = new Date();
+      // Update with correct field mapping
+      const formattedUserData: Partial<User> = {
+        ...userData,
+        updated_at: new Date(),
+      };
       
-      const updatedUser = await updateUser(user.id, userData);
+      // Make sure data is properly formatted for the database
+      if (userData.skills) {
+        formattedUserData.skills = Array.isArray(userData.skills) ? userData.skills : [];
+      }
+      
+      if (userData.languages) {
+        formattedUserData.languages = Array.isArray(userData.languages) ? userData.languages : [];
+      }
+      
+      if (userData.areas_of_interest) {
+        formattedUserData.areas_of_interest = Array.isArray(userData.areas_of_interest) ? userData.areas_of_interest : [];
+      }
+      
+      if (userData.founder_names) {
+        formattedUserData.founder_names = Array.isArray(userData.founder_names) ? userData.founder_names : [];
+      }
+      
+      const updatedUser = await updateUser(user.id, formattedUserData);
       
       if (updatedUser) {
         setUser(updatedUser);

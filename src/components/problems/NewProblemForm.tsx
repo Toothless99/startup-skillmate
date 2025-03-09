@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Problem } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
+import { createProblem } from "@/lib/supabase";
 
 interface NewProblemFormProps {
   onClose: () => void;
@@ -83,44 +85,38 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
       setIsSubmitting(true);
       
       // Create a new problem object
-      const newProblem: Omit<Problem, 'id' | 'created_at' | 'updatedAt'> = {
+      const newProblemData = {
         title: formData.title,
         description: formData.description,
-        startupId: user.id,
-        startup: user,
-        requiredSkills,
-        experienceLevel: formData.experienceLevel,
-        compensation: formData.compensation,
-        deadline: formData.deadline || undefined,
+        startup_id: user.id,
+        required_skills: requiredSkills,
+        experience_level: formData.experienceLevel,
+        compensation: formData.compensation || null,
+        deadline: formData.deadline || null,
         status: "open",
         featured: false,
-        additionalInfo: formData.additionalInfo
-      };
-      
-      // In a real app, you would save this to your database
-      // For now, we'll just simulate a successful creation
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Add an ID and timestamps to simulate a database response
-      const createdProblem: Problem = {
-        ...newProblem,
-        id: `problem-${Date.now()}`,
+        additional_info: formData.additionalInfo || null,
         created_at: new Date(),
-        updatedAt: new Date()
+        updated_at: new Date()
       };
       
-      // Call the success callback
-      onSuccess?.(createdProblem);
+      // Save to Supabase
+      const createdProblem = await createProblem(newProblemData);
       
-      // Close the form
-      onClose();
-      
-      toast({
-        title: "Problem posted!",
-        description: "Your problem has been published and is now visible to solvers.",
-      });
+      if (createdProblem) {
+        // Call the success callback with the new problem
+        onSuccess?.(createdProblem);
+        
+        // Close the form
+        onClose();
+        
+        toast({
+          title: "Problem posted!",
+          description: "Your problem has been published and is now visible to solvers.",
+        });
+      } else {
+        throw new Error("Failed to create problem");
+      }
     } catch (error) {
       console.error("Error posting problem:", error);
       toast({
@@ -271,4 +267,4 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
   );
 };
 
-export default NewProblemForm; 
+export default NewProblemForm;

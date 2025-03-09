@@ -1,4 +1,4 @@
-// First few lines of the file
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Problem } from "@/lib/types";
@@ -18,97 +18,97 @@ const mockProblems: Problem[] = [
     id: "1",
     title: "Develop a Mobile App UI/UX",
     description: "We need a talented UI/UX designer to help us create an intuitive and beautiful mobile app interface for our new fitness tracking application.",
-    startupId: "startup1",
+    startup_id: "startup1",
     startup: {
       id: "startup1",
       email: "startup@example.com",
       name: "FitTech Solutions",
-      companyName: "FitTech Solutions",
+      company_name: "FitTech Solutions",
       role: "startup",
       sectors: ["HealthTech", "Fitness"],
       created_at: new Date("2023-01-15"),
-      updatedAt: new Date("2023-06-20")
+      updated_at: new Date("2023-06-20")
     },
-    requiredSkills: ["UI/UX", "Figma", "Mobile Design", "Prototyping"],
-    experienceLevel: "intermediate",
+    required_skills: ["UI/UX", "Figma", "Mobile Design", "Prototyping"],
+    experience_level: "intermediate",
     compensation: "$2000-$3000 for the project",
     deadline: new Date("2023-09-30"),
     status: "open",
     featured: true,
     created_at: new Date("2023-07-01"),
-    updatedAt: new Date("2023-07-01")
+    updated_at: new Date("2023-07-01")
   },
   {
     id: "2",
     title: "Backend Developer for E-commerce API",
     description: "Looking for a backend developer to help build our e-commerce API using Node.js and MongoDB. Experience with payment gateways is a plus.",
-    startupId: "startup2",
+    startup_id: "startup2",
     startup: {
       id: "startup2",
       email: "techshop@example.com",
       name: "TechShop Innovations",
-      companyName: "TechShop Innovations",
+      company_name: "TechShop Innovations",
       role: "startup",
       sectors: ["E-commerce", "Retail Tech"],
       created_at: new Date("2023-02-10"),
-      updatedAt: new Date("2023-06-15")
+      updated_at: new Date("2023-06-15")
     },
-    requiredSkills: ["Node.js", "MongoDB", "REST API", "Payment Integration"],
-    experienceLevel: "advanced",
+    required_skills: ["Node.js", "MongoDB", "REST API", "Payment Integration"],
+    experience_level: "advanced",
     compensation: "$30-40/hour, 20 hours/week",
     deadline: new Date("2023-09-15"),
     status: "open",
     featured: true,
     created_at: new Date("2023-07-05"),
-    updatedAt: new Date("2023-07-05")
+    updated_at: new Date("2023-07-05")
   },
   {
     id: "3",
     title: "Data Analysis for Market Research",
     description: "We need help analyzing customer survey data and creating insightful visualizations to guide our product development.",
-    startupId: "startup3",
+    startup_id: "startup3",
     startup: {
       id: "startup3",
       email: "dataco@example.com",
       name: "DataCo Analytics",
-      companyName: "DataCo Analytics",
+      company_name: "DataCo Analytics",
       role: "startup",
       sectors: ["Data Analytics", "SaaS"],
       created_at: new Date("2023-03-20"),
-      updatedAt: new Date("2023-05-10")
+      updated_at: new Date("2023-05-10")
     },
-    requiredSkills: ["Python", "Data Analysis", "Pandas", "Data Visualization"],
-    experienceLevel: "beginner",
+    required_skills: ["Python", "Data Analysis", "Pandas", "Data Visualization"],
+    experience_level: "beginner",
     compensation: "$1500 for the project",
     deadline: new Date("2023-08-30"),
     status: "open",
     featured: false,
     created_at: new Date("2023-07-10"),
-    updatedAt: new Date("2023-07-10")
+    updated_at: new Date("2023-07-10")
   },
   {
     id: "4",
     title: "Frontend React Developer",
     description: "Join our team to help build the frontend of our SaaS platform using React and TypeScript.",
-    startupId: "startup4",
+    startup_id: "startup4",
     startup: {
       id: "startup4",
       email: "cloudtech@example.com",
       name: "CloudTech Solutions",
-      companyName: "CloudTech Solutions",
+      company_name: "CloudTech Solutions",
       role: "startup",
       sectors: ["SaaS", "Cloud Computing"],
       created_at: new Date("2023-01-05"),
-      updatedAt: new Date("2023-06-25")
+      updated_at: new Date("2023-06-25")
     },
-    requiredSkills: ["React", "TypeScript", "CSS", "Responsive Design"],
-    experienceLevel: "intermediate",
+    required_skills: ["React", "TypeScript", "CSS", "Responsive Design"],
+    experience_level: "intermediate",
     compensation: "$25-35/hour, part-time",
     deadline: new Date("2023-09-20"),
     status: "open",
     featured: false,
     created_at: new Date("2023-07-15"),
-    updatedAt: new Date("2023-07-15")
+    updated_at: new Date("2023-07-15")
   }
 ];
 
@@ -119,9 +119,10 @@ interface ProblemListProps {
   onViewDetails?: (problemId: string) => void;
   onApply?: (problemId: string) => void;
   featuredOnly?: boolean;
+  isLoading?: boolean; // Add isLoading prop to match Problems.tsx usage
 }
 
-const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onViewDetails, onApply }: ProblemListProps) => {
+const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onViewDetails, onApply, isLoading }: ProblemListProps) => {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
@@ -139,14 +140,14 @@ const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onView
     
     // If startupId is provided, filter problems for that specific startup
     if (startupId) {
-      allProblems = allProblems.filter(problem => problem.startupId === startupId);
+      allProblems = allProblems.filter(problem => problem.startup_id === startupId);
     }
     
     // For search params in URL - for example ?startup=startup1
     const searchParams = new URLSearchParams(location.search);
     const urlStartupId = searchParams.get('startup');
     if (urlStartupId) {
-      allProblems = allProblems.filter(problem => problem.startupId === urlStartupId);
+      allProblems = allProblems.filter(problem => problem.startup_id === urlStartupId);
     }
     
     // For non-authenticated users, show only featured problems if limitForGuests is true
@@ -160,7 +161,7 @@ const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onView
   
   // Get all unique skills from problems
   const allSkills = Array.from(
-    new Set(problems.flatMap((problem) => problem.requiredSkills))
+    new Set(problems.flatMap((problem) => problem.required_skills))
   ).sort();
   
   // Apply filters when inputs change
@@ -175,20 +176,20 @@ const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onView
           problem.title.toLowerCase().includes(term) ||
           problem.description.toLowerCase().includes(term) ||
           problem.startup?.name.toLowerCase().includes(term) ||
-          problem.startup?.companyName?.toLowerCase().includes(term) ||
-          problem.requiredSkills.some(skill => skill.toLowerCase().includes(term))
+          problem.startup?.company_name?.toLowerCase().includes(term) ||
+          problem.required_skills.some(skill => skill.toLowerCase().includes(term))
       );
     }
     
     // Apply experience filter
     if (experienceFilter && experienceFilter !== "all") {
-      filtered = filtered.filter((problem) => problem.experienceLevel === experienceFilter);
+      filtered = filtered.filter((problem) => problem.experience_level === experienceFilter);
     }
     
     // Apply skills filter
     if (selectedSkills.length > 0) {
       filtered = filtered.filter((problem) =>
-        selectedSkills.some((skill) => problem.requiredSkills.includes(skill))
+        selectedSkills.some((skill) => problem.required_skills.includes(skill))
       );
     }
     
@@ -221,6 +222,11 @@ const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onView
       title: "Application Submitted",
       description: "Your application has been successfully submitted.",
     });
+
+    // Call the onApply prop if it exists
+    if (onApply) {
+      onApply(problemId);
+    }
   };
   
   // Handle successful authentication after attempting to apply
@@ -252,7 +258,6 @@ const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onView
         <AuthModal
           isOpen={isAuthModalOpen}
           onClose={() => setIsAuthModalOpen(false)}
-          onSuccess={handleAuthSuccess}
         />
       </div>
     );
@@ -327,32 +332,39 @@ const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onView
         </div>
       )}
       
+      {/* Loading state */}
+      {isLoading && (
+        <div className="col-span-full text-center py-10">
+          <p className="text-muted-foreground">Loading problems...</p>
+        </div>
+      )}
+      
       {/* Problem cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredProblems.length > 0 ? (
-          filteredProblems.map((problem) => (
-            <ProblemCard
-              key={problem.id}
-              problem={problem}
-              onApply={handleApply}
-              onViewDetails={onViewDetails}
-              isFeatured={problem.featured}
-            />
-          ))
-        ) : (
-          <div className="col-span-full text-center py-10">
-            <p className="text-muted-foreground">No problems match your criteria.</p>
-            <Button variant="link" onClick={clearFilters}>
-              Clear all filters
-            </Button>
-          </div>
-        )}
-      </div>
+      {!isLoading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProblems.length > 0 ? (
+            filteredProblems.map((problem) => (
+              <ProblemCard
+                key={problem.id}
+                problem={problem}
+                onViewDetails={onViewDetails}
+                isFeatured={problem.featured}
+              />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-10">
+              <p className="text-muted-foreground">No problems match your criteria.</p>
+              <Button variant="link" onClick={clearFilters}>
+                Clear all filters
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
       
       <AuthModal 
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        onSuccess={handleAuthSuccess}
       />
     </div>
   );

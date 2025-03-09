@@ -93,7 +93,7 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
         experience_level: formData.experienceLevel,
         compensation: formData.compensation || null,
         deadline: formData.deadline || null,
-        status: "open",
+        status: "open" as "open" | "draft" | "in_progress" | "completed" | "cancelled", // Explicitly type the status
         featured: false,
         additional_info: formData.additionalInfo || null,
         created_at: new Date(),

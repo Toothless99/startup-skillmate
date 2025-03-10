@@ -452,14 +452,10 @@ export const getApplicationsForStartup = async (startupId: string): Promise<Appl
     // Try to get applications from Supabase first
     try {
       if (problemIds.length > 0) {
-        // Modified query to properly handle nested relationships
+        // Simplify the query to avoid nested relationship issues
         const { data, error } = await supabase
           .from('applications')
-          .select(`
-            *,
-            problem:problems(*),
-            user:profiles(*)
-          `)
+          .select('*')
           .in('problem_id', problemIds);
           
         if (error) {
@@ -468,7 +464,25 @@ export const getApplicationsForStartup = async (startupId: string): Promise<Appl
         }
         
         if (data && data.length > 0) {
-          return data;
+          // Fetch related problem and user data separately to avoid query parsing issues
+          const applications: Application[] = await Promise.all(
+            data.map(async (app) => {
+              // Get the problem data
+              const problem = startupProblems.find(p => p.id === app.problem_id) || 
+                await getProblemById(app.problem_id);
+              
+              // Get the user data
+              const user = await getUserById(app.user_id);
+              
+              return {
+                ...app,
+                problem,
+                user
+              };
+            })
+          );
+          
+          return applications;
         }
       }
     } catch (e) {
@@ -482,6 +496,33 @@ export const getApplicationsForStartup = async (startupId: string): Promise<Appl
   } catch (error) {
     console.error('Error fetching applications for startup:', error);
     return [];
+  }
+};
+
+// Add a helper function to get a single problem by ID
+export const getProblemById = async (problemId: string): Promise<Problem | null> => {
+  try {
+    // Try to get the problem from Supabase
+    try {
+      const { data, error } = await supabase
+        .from('problems')
+        .select('*, startup:profiles(*)')
+        .eq('id', problemId)
+        .single();
+        
+      if (error) {
+        console.warn('Error fetching problem from Supabase:', error);
+        throw error;
+      }
+      
+      return data;
+    } catch (e) {
+      // Fall back to mock data
+      return mockProblems[problemId] || null;
+    }
+  } catch (error) {
+    console.error('Error fetching problem:', error);
+    return null;
   }
 };
 

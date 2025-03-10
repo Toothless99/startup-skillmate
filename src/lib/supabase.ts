@@ -391,9 +391,10 @@ export const getApplicationsForUser = async (userId: string): Promise<Applicatio
   try {
     // Try to get applications from Supabase first
     try {
+      // Simplify the query to avoid nested relationship issues
       const { data, error } = await supabase
         .from('applications')
-        .select('*, problem:problems(*), problem.startup:profiles(*)')
+        .select('*')
         .eq('user_id', userId);
         
       if (error) {
@@ -402,10 +403,43 @@ export const getApplicationsForUser = async (userId: string): Promise<Applicatio
       }
       
       if (data && data.length > 0) {
-        return data;
+        // Fetch related data separately to avoid query parsing issues
+        const applications: Application[] = await Promise.all(
+          data.map(async (app) => {
+            // Get the problem data
+            const { data: problemData } = await supabase
+              .from('problems')
+              .select('*')
+              .eq('id', app.problem_id)
+              .single();
+              
+            // If we have problem data, also get the startup data
+            let startupData = null;
+            if (problemData && problemData.startup_id) {
+              const { data: startup } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', problemData.startup_id)
+                .single();
+                
+              startupData = startup;
+            }
+            
+            // Combine the data
+            return {
+              ...app,
+              problem: problemData ? {
+                ...problemData,
+                startup: startupData
+              } : null
+            } as Application;
+          })
+        );
+        
+        return applications.filter((app): app is Application => app !== null);
       }
     } catch (e) {
-      console.log("Falling back to mock data for user applications");
+      console.log("Falling back to mock data for user applications:", e);
     }
     
     return Object.values(mockApplications).filter(app => app.user_id === userId);
@@ -414,7 +448,6 @@ export const getApplicationsForUser = async (userId: string): Promise<Applicatio
     return [];
   }
 };
-
 export const getApplicationsForProblem = async (problemId: string): Promise<Application[]> => {
   try {
     // Try to get applications from Supabase first
@@ -430,7 +463,8 @@ export const getApplicationsForProblem = async (problemId: string): Promise<Appl
       }
       
       if (data && data.length > 0) {
-        return data;
+        const applications = data as Application[];
+        return applications;
       }
     } catch (e) {
       console.log("Falling back to mock data for problem applications");

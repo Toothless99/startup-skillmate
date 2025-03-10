@@ -84,8 +84,8 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
     try {
       setIsSubmitting(true);
       
-      // Create a new problem object
-      const newProblemData = {
+      // Create a new problem object with correct typing
+      const newProblemData: Partial<Problem> = {
         title: formData.title,
         description: formData.description,
         startup_id: user.id,
@@ -93,7 +93,7 @@ const NewProblemForm = ({ onClose, onSuccess }: NewProblemFormProps) => {
         experience_level: formData.experienceLevel,
         compensation: formData.compensation || null,
         deadline: formData.deadline || null,
-        status: "open" as "open" | "draft" | "in_progress" | "completed" | "cancelled", // Explicitly type the status
+        status: "open" as "open" | "draft" | "in_progress" | "completed" | "cancelled",
         featured: false,
         additional_info: formData.additionalInfo || null,
         created_at: new Date(),

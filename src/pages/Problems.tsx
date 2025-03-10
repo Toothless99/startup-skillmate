@@ -10,6 +10,8 @@ import NewProblemForm from "@/components/problems/NewProblemForm";
 import { useAuth } from "@/context/AuthContext";
 import AuthModal from "@/components/auth/AuthModal";
 import { getProblems } from "@/lib/supabase";
+import ProblemDetailsDialog from "@/components/problems/ProblemDetailsDialog";
+import ApplicationForm from "@/components/applications/ApplicationForm";
 
 const Problems = () => {
   const { toast } = useToast();
@@ -18,6 +20,14 @@ const Problems = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isNewProblemDialogOpen, setIsNewProblemDialogOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [selectedProblemId, setSelectedProblemId] = useState<string | null>(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isApplicationDialogOpen, setIsApplicationDialogOpen] = useState(false);
+
+  // Get selected problem data
+  const selectedProblem = selectedProblemId 
+    ? problems.find(p => p.id === selectedProblemId) || null
+    : null;
 
   useEffect(() => {
     const fetchProblems = async () => {
@@ -58,6 +68,39 @@ const Problems = () => {
     });
   };
 
+  const handleViewDetails = (problemId: string) => {
+    setSelectedProblemId(problemId);
+    setIsDetailsDialogOpen(true);
+  };
+
+  const handleApplyClick = (problemId: string) => {
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    
+    // Check if user is a student
+    if (user?.role !== "student") {
+      toast({
+        title: "Permission denied",
+        description: "Only students/solvers can apply to problems.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setSelectedProblemId(problemId);
+    setIsApplicationDialogOpen(true);
+  };
+
+  const handleApplicationSuccess = () => {
+    toast({
+      title: "Application successful",
+      description: "Your application has been submitted successfully.",
+    });
+    setIsApplicationDialogOpen(false);
+  };
+
   return (
     <div className="container mx-auto px-4 md:px-6 max-w-7xl">
       <div className="py-8">
@@ -75,7 +118,8 @@ const Problems = () => {
         <ProblemList 
           initialProblems={problems}
           isLoading={isLoading}
-          onViewDetails={(id) => console.log("View details for problem:", id)}
+          onViewDetails={handleViewDetails}
+          onApply={handleApplyClick}
         />
       </div>
       
@@ -89,6 +133,33 @@ const Problems = () => {
           />
         </DialogContent>
       </Dialog>
+      
+      {/* Problem Details Dialog */}
+      {selectedProblem && (
+        <ProblemDetailsDialog
+          problem={selectedProblem}
+          isOpen={isDetailsDialogOpen}
+          onClose={() => setIsDetailsDialogOpen(false)}
+          onApply={() => {
+            setIsDetailsDialogOpen(false);
+            setIsApplicationDialogOpen(true);
+          }}
+        />
+      )}
+      
+      {/* Application Dialog */}
+      {selectedProblem && (
+        <Dialog open={isApplicationDialogOpen} onOpenChange={setIsApplicationDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogTitle>Apply to Problem</DialogTitle>
+            <ApplicationForm 
+              problem={selectedProblem}
+              onClose={() => setIsApplicationDialogOpen(false)}
+              onSuccess={handleApplicationSuccess}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
       
       {/* Auth Modal */}
       <AuthModal 

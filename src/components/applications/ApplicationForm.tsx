@@ -52,15 +52,21 @@ const ApplicationForm = ({ problem, onClose, onSuccess }: ApplicationFormProps) 
       };
       
       // Submit the application to the database
-      await createApplication(applicationData);
+      const result = await createApplication(applicationData);
       
-      toast({
-        title: "Application submitted!",
-        description: "Your application has been sent to the startup.",
-      });
-      
-      onSuccess?.();
-      onClose();
+      if (result) {
+        toast({
+          title: "Application submitted!",
+          description: "Your application has been sent to the startup.",
+        });
+        
+        if (onSuccess) {
+          onSuccess();
+        }
+        onClose();
+      } else {
+        throw new Error("Failed to submit application");
+      }
     } catch (error) {
       console.error("Error submitting application:", error);
       toast({

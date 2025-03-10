@@ -104,6 +104,7 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
     
     // Try updating in Supabase, but fallback to mock data
     try {
+      console.log("Attempting to update user in Supabase:", userId, userData);
       const { data, error } = await supabase
         .from('profiles')
         .update(userData)
@@ -117,6 +118,7 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
       }
       return data;
     } catch (e) {
+      console.log("Error updating in Supabase, falling back to mock data");
       // Create a mock user with the updates
       const user = await getUserById(userId);
       if (user) {
@@ -200,28 +202,48 @@ export const getStartups = async (): Promise<User[]> => {
 // Problem functions
 export const createProblem = async (problemData: Partial<Problem>): Promise<Problem | null> => {
   try {
-    // For demo, create a mock problem
-    const problemId = `problem-${Date.now()}`;
-    const newProblem: Problem = {
-      id: problemId,
-      title: problemData.title || '',
-      description: problemData.description || '',
-      startup_id: problemData.startup_id || '',
-      required_skills: problemData.required_skills || [],
-      experience_level: problemData.experience_level || 'beginner',
-      status: problemData.status || 'open',
-      created_at: new Date(),
-      updated_at: new Date(),
-      ...problemData
-    };
+    console.log("Creating problem with data:", problemData);
     
-    // Add startup information if available
-    if (problemData.startup_id && mockUsers[problemData.startup_id]) {
-      newProblem.startup = mockUsers[problemData.startup_id];
+    // Try to insert the problem into Supabase first
+    try {
+      const { data, error } = await supabase
+        .from('problems')
+        .insert(problemData)
+        .select()
+        .single();
+        
+      if (error) {
+        console.warn('Error inserting problem into Supabase:', error);
+        throw error;
+      }
+      
+      return data;
+    } catch (e) {
+      console.log("Falling back to mock data for problem creation");
+      // For demo, create a mock problem
+      const problemId = `problem-${Date.now()}`;
+      const newProblem: Problem = {
+        id: problemId,
+        title: problemData.title || '',
+        description: problemData.description || '',
+        startup_id: problemData.startup_id || '',
+        required_skills: problemData.required_skills || [],
+        experience_level: problemData.experience_level || 'beginner',
+        status: problemData.status || 'open',
+        created_at: new Date(),
+        updated_at: new Date(),
+        ...problemData
+      };
+      
+      // Add startup information if available
+      if (problemData.startup_id && mockUsers[problemData.startup_id]) {
+        newProblem.startup = mockUsers[problemData.startup_id];
+      }
+      
+      mockProblems[problemId] = newProblem;
+      console.log("Created mock problem:", newProblem);
+      return newProblem;
     }
-    
-    mockProblems[problemId] = newProblem;
-    return newProblem;
   } catch (error) {
     console.error('Error creating problem:', error);
     return null;
@@ -231,6 +253,24 @@ export const createProblem = async (problemData: Partial<Problem>): Promise<Prob
 // Get all problems
 export const getProblems = async (): Promise<Problem[]> => {
   try {
+    // Try to get problems from Supabase first
+    try {
+      const { data, error } = await supabase
+        .from('problems')
+        .select('*, startup:profiles(*)');
+        
+      if (error) {
+        console.warn('Error fetching problems from Supabase:', error);
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        return data;
+      }
+    } catch (e) {
+      console.log("Falling back to mock data for problems");
+    }
+    
     // Create some mock problems if none exist
     if (Object.keys(mockProblems).length === 0) {
       const startups = await getStartups();
@@ -270,6 +310,25 @@ export const getProblems = async (): Promise<Problem[]> => {
 // Get problems by startup ID
 export const getProblemsByStartupId = async (startupId: string): Promise<Problem[]> => {
   try {
+    // Try to get problems from Supabase first
+    try {
+      const { data, error } = await supabase
+        .from('problems')
+        .select('*, startup:profiles(*)')
+        .eq('startup_id', startupId);
+        
+      if (error) {
+        console.warn('Error fetching problems by startup ID from Supabase:', error);
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        return data;
+      }
+    } catch (e) {
+      console.log("Falling back to mock data for startup problems");
+    }
+    
     return Object.values(mockProblems).filter(problem => problem.startup_id === startupId);
   } catch (error) {
     console.error('Error fetching problems by startup ID:', error);
@@ -280,28 +339,49 @@ export const getProblemsByStartupId = async (startupId: string): Promise<Problem
 // Application functions
 export const createApplication = async (applicationData: Partial<Application>): Promise<Application | null> => {
   try {
-    const applicationId = `application-${Date.now()}`;
-    const newApplication: Application = {
-      id: applicationId,
-      problem_id: applicationData.problem_id || '',
-      user_id: applicationData.user_id || '',
-      status: applicationData.status || 'pending',
-      created_at: new Date(),
-      updated_at: new Date(),
-      ...applicationData
-    };
+    console.log("Creating application with data:", applicationData);
     
-    // Add problem and user information if available
-    if (applicationData.problem_id && mockProblems[applicationData.problem_id]) {
-      newApplication.problem = mockProblems[applicationData.problem_id];
+    // Try to insert the application into Supabase first
+    try {
+      const { data, error } = await supabase
+        .from('applications')
+        .insert(applicationData)
+        .select()
+        .single();
+        
+      if (error) {
+        console.warn('Error inserting application into Supabase:', error);
+        throw error;
+      }
+      
+      return data;
+    } catch (e) {
+      console.log("Falling back to mock data for application creation");
+      
+      const applicationId = `application-${Date.now()}`;
+      const newApplication: Application = {
+        id: applicationId,
+        problem_id: applicationData.problem_id || '',
+        user_id: applicationData.user_id || '',
+        status: applicationData.status || 'pending',
+        created_at: new Date(),
+        updated_at: new Date(),
+        ...applicationData
+      };
+      
+      // Add problem and user information if available
+      if (applicationData.problem_id && mockProblems[applicationData.problem_id]) {
+        newApplication.problem = mockProblems[applicationData.problem_id];
+      }
+      
+      if (applicationData.user_id && mockUsers[applicationData.user_id]) {
+        newApplication.user = mockUsers[applicationData.user_id];
+      }
+      
+      mockApplications[applicationId] = newApplication;
+      console.log("Created mock application:", newApplication);
+      return newApplication;
     }
-    
-    if (applicationData.user_id && mockUsers[applicationData.user_id]) {
-      newApplication.user = mockUsers[applicationData.user_id];
-    }
-    
-    mockApplications[applicationId] = newApplication;
-    return newApplication;
   } catch (error) {
     console.error('Error creating application:', error);
     return null;
@@ -310,6 +390,25 @@ export const createApplication = async (applicationData: Partial<Application>): 
 
 export const getApplicationsForUser = async (userId: string): Promise<Application[]> => {
   try {
+    // Try to get applications from Supabase first
+    try {
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*, problem:problems(*), problem.startup:profiles(*)')
+        .eq('user_id', userId);
+        
+      if (error) {
+        console.warn('Error fetching applications for user from Supabase:', error);
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        return data;
+      }
+    } catch (e) {
+      console.log("Falling back to mock data for user applications");
+    }
+    
     return Object.values(mockApplications).filter(app => app.user_id === userId);
   } catch (error) {
     console.error('Error fetching applications for user:', error);
@@ -319,6 +418,25 @@ export const getApplicationsForUser = async (userId: string): Promise<Applicatio
 
 export const getApplicationsForProblem = async (problemId: string): Promise<Application[]> => {
   try {
+    // Try to get applications from Supabase first
+    try {
+      const { data, error } = await supabase
+        .from('applications')
+        .select('*, user:profiles(*)')
+        .eq('problem_id', problemId);
+        
+      if (error) {
+        console.warn('Error fetching applications for problem from Supabase:', error);
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        return data;
+      }
+    } catch (e) {
+      console.log("Falling back to mock data for problem applications");
+    }
+    
     return Object.values(mockApplications).filter(app => app.problem_id === problemId);
   } catch (error) {
     console.error('Error fetching applications for problem:', error);
@@ -331,6 +449,27 @@ export const getApplicationsForStartup = async (startupId: string): Promise<Appl
     // Get all problems for this startup
     const startupProblems = await getProblemsByStartupId(startupId);
     const problemIds = startupProblems.map(p => p.id);
+    
+    // Try to get applications from Supabase first
+    try {
+      if (problemIds.length > 0) {
+        const { data, error } = await supabase
+          .from('applications')
+          .select('*, problem:problems(*), user:profiles(*)')
+          .in('problem_id', problemIds);
+          
+        if (error) {
+          console.warn('Error fetching applications for startup from Supabase:', error);
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          return data;
+        }
+      }
+    } catch (e) {
+      console.log("Falling back to mock data for startup applications");
+    }
     
     // Filter applications for these problems
     return Object.values(mockApplications).filter(app => 
@@ -347,14 +486,36 @@ export const updateApplicationStatus = async (
   status: 'pending' | 'accepted' | 'rejected'
 ): Promise<Application | null> => {
   try {
-    if (mockApplications[applicationId]) {
-      mockApplications[applicationId] = {
-        ...mockApplications[applicationId],
-        status,
-        updated_at: new Date()
-      };
-      return mockApplications[applicationId];
+    console.log("Updating application status:", applicationId, status);
+    
+    // Try to update the application in Supabase first
+    try {
+      const { data, error } = await supabase
+        .from('applications')
+        .update({ status, updated_at: new Date() })
+        .eq('id', applicationId)
+        .select()
+        .single();
+        
+      if (error) {
+        console.warn('Error updating application status in Supabase:', error);
+        throw error;
+      }
+      
+      return data;
+    } catch (e) {
+      console.log("Falling back to mock data for application status update");
+      
+      if (mockApplications[applicationId]) {
+        mockApplications[applicationId] = {
+          ...mockApplications[applicationId],
+          status,
+          updated_at: new Date()
+        };
+        return mockApplications[applicationId];
+      }
     }
+    
     return null;
   } catch (error) {
     console.error('Error updating application status:', error);

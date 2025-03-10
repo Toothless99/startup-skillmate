@@ -205,13 +205,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return false;
       }
       
-      // Update with correct field mapping
+      console.log("Updating user profile with data:", userData);
+      
+      // Format arrays properly
       const formattedUserData: Partial<User> = {
         ...userData,
         updated_at: new Date(),
       };
       
-      // Make sure data is properly formatted for the database
+      // Make sure arrays are properly formed
       if (userData.skills) {
         formattedUserData.skills = Array.isArray(userData.skills) ? userData.skills : [];
       }
@@ -225,12 +227,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       
       if (userData.founder_names) {
-        formattedUserData.founder_names = Array.isArray(userData.founder_names) ? userData.founder_names : [];
+        formattedUserData.founder_names = Array.isArray(userData.founder_names) 
+          ? userData.founder_names 
+          : typeof userData.founder_names === 'string' 
+            ? (userData.founder_names as string).split(',').map(name => name.trim()) 
+            : [];
       }
+      
+      if (userData.sectors) {
+        formattedUserData.sectors = Array.isArray(userData.sectors) ? userData.sectors : [];
+      }
+      
+      if (userData.industry_sectors) {
+        formattedUserData.industry_sectors = Array.isArray(userData.industry_sectors) ? userData.industry_sectors : [];
+      }
+      
+      console.log("Formatted user data:", formattedUserData);
       
       const updatedUser = await updateUser(user.id, formattedUserData);
       
       if (updatedUser) {
+        console.log("User updated successfully:", updatedUser);
         setUser(updatedUser);
         toast({
           title: "Profile updated",

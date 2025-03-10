@@ -11,106 +11,8 @@ import { X, Search, Filter, Lock } from "lucide-react";
 import AuthModal from "@/components/auth/AuthModal";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "react-router-dom";
-
-// Mock problems data
-const mockProblems: Problem[] = [
-  {
-    id: "1",
-    title: "Develop a Mobile App UI/UX",
-    description: "We need a talented UI/UX designer to help us create an intuitive and beautiful mobile app interface for our new fitness tracking application.",
-    startup_id: "startup1",
-    startup: {
-      id: "startup1",
-      email: "startup@example.com",
-      name: "FitTech Solutions",
-      company_name: "FitTech Solutions",
-      role: "startup",
-      sectors: ["HealthTech", "Fitness"],
-      created_at: new Date("2023-01-15"),
-      updated_at: new Date("2023-06-20")
-    },
-    required_skills: ["UI/UX", "Figma", "Mobile Design", "Prototyping"],
-    experience_level: "intermediate",
-    compensation: "$2000-$3000 for the project",
-    deadline: new Date("2023-09-30"),
-    status: "open",
-    featured: true,
-    created_at: new Date("2023-07-01"),
-    updated_at: new Date("2023-07-01")
-  },
-  {
-    id: "2",
-    title: "Backend Developer for E-commerce API",
-    description: "Looking for a backend developer to help build our e-commerce API using Node.js and MongoDB. Experience with payment gateways is a plus.",
-    startup_id: "startup2",
-    startup: {
-      id: "startup2",
-      email: "techshop@example.com",
-      name: "TechShop Innovations",
-      company_name: "TechShop Innovations",
-      role: "startup",
-      sectors: ["E-commerce", "Retail Tech"],
-      created_at: new Date("2023-02-10"),
-      updated_at: new Date("2023-06-15")
-    },
-    required_skills: ["Node.js", "MongoDB", "REST API", "Payment Integration"],
-    experience_level: "advanced",
-    compensation: "$30-40/hour, 20 hours/week",
-    deadline: new Date("2023-09-15"),
-    status: "open",
-    featured: true,
-    created_at: new Date("2023-07-05"),
-    updated_at: new Date("2023-07-05")
-  },
-  {
-    id: "3",
-    title: "Data Analysis for Market Research",
-    description: "We need help analyzing customer survey data and creating insightful visualizations to guide our product development.",
-    startup_id: "startup3",
-    startup: {
-      id: "startup3",
-      email: "dataco@example.com",
-      name: "DataCo Analytics",
-      company_name: "DataCo Analytics",
-      role: "startup",
-      sectors: ["Data Analytics", "SaaS"],
-      created_at: new Date("2023-03-20"),
-      updated_at: new Date("2023-05-10")
-    },
-    required_skills: ["Python", "Data Analysis", "Pandas", "Data Visualization"],
-    experience_level: "beginner",
-    compensation: "$1500 for the project",
-    deadline: new Date("2023-08-30"),
-    status: "open",
-    featured: false,
-    created_at: new Date("2023-07-10"),
-    updated_at: new Date("2023-07-10")
-  },
-  {
-    id: "4",
-    title: "Frontend React Developer",
-    description: "Join our team to help build the frontend of our SaaS platform using React and TypeScript.",
-    startup_id: "startup4",
-    startup: {
-      id: "startup4",
-      email: "cloudtech@example.com",
-      name: "CloudTech Solutions",
-      company_name: "CloudTech Solutions",
-      role: "startup",
-      sectors: ["SaaS", "Cloud Computing"],
-      created_at: new Date("2023-01-05"),
-      updated_at: new Date("2023-06-25")
-    },
-    required_skills: ["React", "TypeScript", "CSS", "Responsive Design"],
-    experience_level: "intermediate",
-    compensation: "$25-35/hour, part-time",
-    deadline: new Date("2023-09-20"),
-    status: "open",
-    featured: false,
-    created_at: new Date("2023-07-15"),
-    updated_at: new Date("2023-07-15")
-  }
-];
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import ApplicationForm from "@/components/applications/ApplicationForm";
 
 interface ProblemListProps {
   initialProblems?: Problem[];
@@ -119,11 +21,11 @@ interface ProblemListProps {
   onViewDetails?: (problemId: string) => void;
   onApply?: (problemId: string) => void;
   featuredOnly?: boolean;
-  isLoading?: boolean; // Add isLoading prop to match Problems.tsx usage
+  isLoading?: boolean;
 }
 
 const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onViewDetails, onApply, isLoading }: ProblemListProps) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const location = useLocation();
   const [problems, setProblems] = useState<Problem[]>([]);
@@ -132,11 +34,12 @@ const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onView
   const [experienceFilter, setExperienceFilter] = useState<string>("all");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [appliedProblemId, setAppliedProblemId] = useState<string | null>(null);
+  const [isApplicationDialogOpen, setIsApplicationDialogOpen] = useState(false);
+  const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
   
   useEffect(() => {
     // Initialize problems
-    let allProblems = initialProblems?.length ? initialProblems : mockProblems;
+    let allProblems = initialProblems?.length ? initialProblems : [];
     
     // If startupId is provided, filter problems for that specific startup
     if (startupId) {
@@ -175,7 +78,7 @@ const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onView
         (problem) =>
           problem.title.toLowerCase().includes(term) ||
           problem.description.toLowerCase().includes(term) ||
-          problem.startup?.name.toLowerCase().includes(term) ||
+          problem.startup?.name?.toLowerCase().includes(term) ||
           problem.startup?.company_name?.toLowerCase().includes(term) ||
           problem.required_skills.some(skill => skill.toLowerCase().includes(term))
       );
@@ -210,35 +113,41 @@ const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onView
     setSelectedSkills([]);
   };
   
-  const handleApply = (problemId: string) => {
+  const handleApply = (problem: Problem) => {
     if (!isAuthenticated) {
-      setAppliedProblemId(problemId);
+      setSelectedProblem(problem);
       setIsAuthModalOpen(true);
       return;
     }
     
-    // In a real app, this would send the application to the backend
-    toast({
-      title: "Application Submitted",
-      description: "Your application has been successfully submitted.",
-    });
-
-    // Call the onApply prop if it exists
-    if (onApply) {
-      onApply(problemId);
+    // Don't allow startups to apply to problems
+    if (user?.role !== "student") {
+      toast({
+        title: "Permission denied",
+        description: "Only students/solvers can apply to problems.",
+        variant: "destructive",
+      });
+      return;
     }
+    
+    // Open application dialog
+    setSelectedProblem(problem);
+    setIsApplicationDialogOpen(true);
   };
   
-  // Handle successful authentication after attempting to apply
-  const handleAuthSuccess = () => {
-    setIsAuthModalOpen(false);
-    if (appliedProblemId) {
-      toast({
-        title: "Application Submitted",
-        description: "Your application has been successfully submitted.",
-      });
-      setAppliedProblemId(null);
+  const handleApplicationSuccess = () => {
+    toast({
+      title: "Application submitted",
+      description: "Your application has been successfully submitted.",
+    });
+    
+    // Call the parent's onApply callback if it exists
+    if (onApply && selectedProblem) {
+      onApply(selectedProblem.id);
     }
+    
+    setIsApplicationDialogOpen(false);
+    setSelectedProblem(null);
   };
   
   // Show authentication prompt for guests when limiting content
@@ -347,7 +256,8 @@ const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onView
               <ProblemCard
                 key={problem.id}
                 problem={problem}
-                onViewDetails={onViewDetails}
+                onViewDetails={() => onViewDetails?.(problem.id)}
+                onApply={() => handleApply(problem)}
                 isFeatured={problem.featured}
               />
             ))
@@ -362,10 +272,25 @@ const ProblemList = ({ initialProblems, startupId, limitForGuests = true, onView
         </div>
       )}
       
+      {/* Auth Modal */}
       <AuthModal 
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
       />
+      
+      {/* Application Dialog */}
+      {selectedProblem && (
+        <Dialog open={isApplicationDialogOpen} onOpenChange={setIsApplicationDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogTitle>Apply to Problem</DialogTitle>
+            <ApplicationForm 
+              problem={selectedProblem}
+              onClose={() => setIsApplicationDialogOpen(false)}
+              onSuccess={handleApplicationSuccess}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

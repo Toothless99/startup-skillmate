@@ -1,4 +1,3 @@
-
 // src/lib/supabase.ts
 
 import { createClient } from '@supabase/supabase-js';
@@ -453,9 +452,14 @@ export const getApplicationsForStartup = async (startupId: string): Promise<Appl
     // Try to get applications from Supabase first
     try {
       if (problemIds.length > 0) {
+        // Modified query to properly handle nested relationships
         const { data, error } = await supabase
           .from('applications')
-          .select('*, problem:problems(*), user:profiles(*)')
+          .select(`
+            *,
+            problem:problems(*),
+            user:profiles(*)
+          `)
           .in('problem_id', problemIds);
           
         if (error) {
